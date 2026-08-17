@@ -13,11 +13,7 @@ export const SITE = {
 };
 
 export const AMAZON = {
-  // TODO: sustituye por tu Tracking ID real de Amazon Associates España en cuanto
-  // te den de alta la cuenta (formato típico: "tunombre-21"). Hasta entonces este
-  // sitio NO debe publicarse con enlaces de afiliado activos, porque un tag
-  // placeholder no genera comisión y puede incumplir el Operating Agreement.
-  associateTag: 'TU-TAG-AQUI-21',
+  associateTag: 'mascotasradar-21',
   marketplace: 'amazon.es'
 };
 
