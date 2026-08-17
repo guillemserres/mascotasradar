@@ -183,11 +183,13 @@ const adsenseConfigured = ADSENSE.clientId !== '[ADSENSE_ID]';
       void banner.offsetHeight;
       root.classList.add('is-visible');
       banner.classList.add('is-visible');
+      scrim.classList.add('is-visible');
     }
 
     function hideAll(afterHide) {
       root.classList.remove('is-visible');
       banner.classList.remove('is-visible');
+      scrim.classList.remove('is-visible');
       closePrefs();
       window.setTimeout(function () {
         root.hidden = true;
@@ -207,7 +209,9 @@ const adsenseConfigured = ADSENSE.clientId !== '[ADSENSE_ID]';
     }
 
     function closePrefs() {
-      scrim.classList.remove('is-visible');
+      // El scrim no se quita aquí: mientras el banner siga abierto detrás
+      // (root.is-visible), debe seguir oscureciendo el fondo. Solo hideAll()
+      // lo retira, al cerrar todo el flujo de consentimiento.
       prefs.classList.remove('is-visible');
       banner.classList.remove('is-hidden-behind');
       window.setTimeout(function () {
