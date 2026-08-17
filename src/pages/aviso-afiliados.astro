@@ -1,0 +1,57 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../site.config';
+---
+
+<BaseLayout
+  title="Aviso de afiliados"
+  description="Información sobre la relación de este sitio con el programa de Amazon Associates."
+>
+  <div class="wrap">
+  <div class="prose">
+  <h1>Aviso de afiliados</h1>
+
+  <p>
+    <strong>{SITE.name}</strong> participa en el Programa de Afiliados de
+    Amazon EU, un programa de publicidad de afiliados diseñado para ofrecer a
+    los sitios web un medio para obtener comisiones por publicidad, publicitando
+    e incluyendo enlaces a Amazon.es.
+  </p>
+
+  <p>
+    Como Afiliado de Amazon, obtengo ingresos por las compras adscritas que
+    cumplen los requisitos aplicables. Esto significa que, si haces clic en
+    alguno de los enlaces a productos de Amazon de este sitio y completas una
+    compra, puedo recibir una pequeña comisión. Esto no supone ningún coste
+    adicional para ti: el precio que pagas es el mismo que pagarías entrando
+    directamente en Amazon.
+
+    </p>
+
+  <h2>Cómo elegimos qué recomendar</h2>
+  <p>
+    Los productos y marcas que se recomiendan en este sitio se seleccionan en
+    base a criterios editoriales propios (características, valoraciones
+    públicas disponibles, relación calidad-precio y experiencia con la
+    categoría de producto), no en base a qué comisión pague cada producto. La
+    posible comisión de afiliado no influye en el resultado de las
+    comparativas.
+  </p>
+
+  <h2>Precios</h2>
+  <p>
+    Los precios mostrados junto a los productos son orientativos y
+    corresponden a la fecha indicada junto a cada enlace. Los precios de
+    Amazon cambian con frecuencia; el precio final y la disponibilidad
+    siempre se confirman en la página del producto en Amazon.es antes de
+    completar cualquier compra.
+  </p>
+
+  <p>
+    Para más información sobre cómo tratamos tus datos al navegar por este
+    sitio, consulta la <a href="/politica-privacidad/">Política de
+    Privacidad</a>.
+  </p>
+  </div>
+  </div>
+</BaseLayout>

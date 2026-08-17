@@ -1,0 +1,440 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from './BaseLayout.astro';
+import AffiliateDisclosure from '../components/AffiliateDisclosure.astro';
+import AmazonProductLink from '../components/AmazonProductLink.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import BackToTop from '../components/BackToTop.astro';
+import RatingStars from '../components/RatingStars.astro';
+import ProductCard from '../components/ProductCard.astro';
+import AdSlot from '../components/AdSlot.astro';
+import Icon from '../components/Icon.astro';
+import Byline from '../components/Byline.astro';
+import CoverArt from '../components/CoverArt.astro';
+import { buildAmazonUrl } from '../lib/amazon';
+import {
+  SITE,
+  ANIMALS,
+  SECTIONS,
+  getCategory,
+  getType,
+  type Animal,
+  type CategorizedAnimal
+} from '../site.config';
+
+interface Props {
+  title: string;
+  description: string;
+  pubDate: Date;
+  updatedDate?: Date;
+  animal: Animal;
+  seccion?: string;
+  categoria?: string;
+  tipo?: string;
+  productSlug: string;
+  asinOrUrl: string;
+  price?: string;
+  priceCheckedDate?: string;
+  rating: number;
+  bestFor: string;
+  pros: string[];
+  cons: string[];
+  imageUrl?: string;
+  marca?: string;
+  variante?: string;
+}
+
+const {
+  title,
+  description,
+  pubDate,
+  updatedDate,
+  animal,
+  seccion,
+  categoria,
+  tipo,
+  productSlug,
+  asinOrUrl,
+  price,
+  priceCheckedDate,
+  rating,
+  bestFor,
+  pros,
+  cons,
+  imageUrl,
+  marca,
+  variante
+} = Astro.props;
+
+const isNew = Boolean(categoria && tipo);
+const animalInfo = ANIMALS.find((a) => a.slug === animal)!;
+const sectionInfo = isNew
+  ? getType(animal as CategorizedAnimal, categoria!, tipo!)
+  : SECTIONS[animal as 'otras-mascotas'].find((s) => s.slug === seccion)!;
+const categoryInfo = isNew ? getCategory(animal as CategorizedAnimal, categoria!) : null;
+
+const basePath = isNew ? `/${animal}/${categoria}/${tipo}/` : `/${animal}/${seccion}/`;
+const coverSlug = isNew ? tipo! : seccion!;
+
+const related = (await getCollection('productos'))
+  .filter((p) =>
+    isNew
+      ? p.data.animal === animal &&
+        p.data.categoria === categoria &&
+        p.data.tipo === tipo &&
+        p.id !== productSlug
+      : p.data.animal === animal && p.data.seccion === seccion && p.id !== productSlug
+  )
+  .slice(0, 3);
+
+const breadcrumbItems = isNew
+  ? [
+      { label: 'Inicio', href: '/' },
+      { label: animalInfo.label, href: `/${animal}/` },
+      { label: categoryInfo!.label, href: `/${animal}/${categoria}/` },
+      { label: sectionInfo.label, href: basePath },
+      { label: title }
+    ]
+  : [
+      { label: 'Inicio', href: '/' },
+      { label: animalInfo.label, href: `/${animal}/` },
+      { label: sectionInfo.label, href: basePath },
+      { label: title }
+    ];
+
+// Precio en formato schema.org (número con punto decimal, sin símbolo de
+// moneda) a partir del precio ya introducido a mano en el frontmatter
+// ("79,99 €" → "79.99") — nunca se inventa un precio nuevo, solo se
+// reformatea el que ya existe. Sin "availability": no tenemos disponibilidad
+// en tiempo real de Amazon, así que afirmarla sería un dato inventado.
+function parsePrice(raw: string): string | null {
+  const match = raw.match(/([\d.,]+)\s*€/);
+  if (!match) return null;
+  return match[1].replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.');
+}
+const priceAmount = price ? parsePrice(price) : null;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: title,
+  description,
+  url: new URL(`${basePath}${productSlug}/`, SITE.url).toString(),
+  ...(imageUrl ? { image: imageUrl } : {}),
+  ...(marca ? { brand: { '@type': 'Brand', name: marca } } : {}),
+  review: {
+    '@type': 'Review',
+    reviewRating: { '@type': 'Rating', ratingValue: rating, bestRating: 5, worstRating: 1 },
+    author: { '@type': 'Organization', name: SITE.name },
+    datePublished: pubDate.toISOString()
+  },
+  ...(priceAmount
+    ? {
+        offers: {
+          '@type': 'Offer',
+          price: priceAmount,
+          priceCurrency: 'EUR',
+          url: buildAmazonUrl(asinOrUrl)
+        }
+      }
+    : {})
+};
+---
+
+<BaseLayout title={title} description={description}>
+  <div class="wrap">
+    <Breadcrumbs items={breadcrumbItems} />
+
+    <article class="product">
+      <header class="product__head">
+        <CoverArt
+          seccion={coverSlug}
+          icon={sectionInfo.icon}
+          alt={title}
+          imageUrl={imageUrl}
+          ratio="banner"
+          fit="contain"
+        />
+        <h1>{title}</h1>
+        <p class="product__meta">
+          Publicado el{' '}
+          {pubDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+          {
+            updatedDate && (
+              <>
+                {' '}
+                · Actualizado el{' '}
+                {updatedDate.toLocaleDateString('es-ES', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric'
+                })}
+              </>
+            )
+          }
+        </p>
+        <Byline />
+      </header>
+
+      <AffiliateDisclosure />
+
+      <div class="product__summary" data-reveal>
+        <div class="product__rating-block">
+          <RatingStars rating={rating} size={20} />
+          <span class="product__rating-value">{rating.toFixed(1)}/5</span>
+          <span class="product__rating-label">Nuestra valoración</span>
+        </div>
+        <p class="product__best-for">
+          <Icon name="compass" size={16} />
+          <span><strong>Ideal para:</strong> {bestFor}</span>
+        </p>
+        {marca && (
+          <p class="product__tag">
+            <Icon name="tag" size={16} />
+            <span><strong>Marca:</strong> {marca}</span>
+          </p>
+        )}
+        {variante && (
+          <p class="product__tag">
+            <span><strong>Tipo:</strong> {variante}</span>
+          </p>
+        )}
+      </div>
+
+      <div class="product__pros-cons" data-reveal style="--reveal-delay:80ms">
+        <div class="pros">
+          <h2>A favor</h2>
+          <ul>
+            {pros.map((p) => <li>{p}</li>)}
+          </ul>
+        </div>
+        <div class="cons">
+          <h2>A tener en cuenta</h2>
+          <ul>
+            {cons.map((c) => <li>{c}</li>)}
+          </ul>
+        </div>
+      </div>
+
+      <AmazonProductLink
+        asinOrUrl={asinOrUrl}
+        productName={title}
+        price={price}
+        priceCheckedDate={priceCheckedDate}
+        showName={false}
+      />
+
+      <div class="prose product__body">
+        <slot />
+      </div>
+
+      <AmazonProductLink
+        asinOrUrl={asinOrUrl}
+        productName={title}
+        price={price}
+        priceCheckedDate={priceCheckedDate}
+        label="Comprobar disponibilidad en Amazon"
+        showName={false}
+      />
+
+      <AdSlot variant="in-article" belowFold />
+
+      {
+        related.length > 0 && (
+          <section class="product__related" aria-label="Otros productos de esta sección">
+            <h2 data-reveal>Otras opciones en {sectionInfo.label.toLowerCase()}</h2>
+            <div class="product__related-grid">
+              {related.map((p) => (
+                <ProductCard
+                  href={`${basePath}${p.id}/`}
+                  title={p.data.title}
+                  description={p.data.description}
+                  rating={p.data.rating}
+                  bestFor={p.data.bestFor}
+                  seccion={coverSlug}
+                  icon={sectionInfo.icon}
+                  imageUrl={p.data.imageUrl}
+                  marca={p.data.marca}
+                  variante={p.data.variante}
+                  tamanos={p.data.tamanos}
+                  necesidades={p.data.necesidades}
+                />
+              ))}
+            </div>
+            <a class="product__hub-link" href={basePath}>
+              Ver la guía completa de {sectionInfo.label.toLowerCase()}
+              <Icon name="chevronRight" size={15} />
+            </a>
+          </section>
+        )
+      }
+    </article>
+  </div>
+
+  <BackToTop />
+
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+</BaseLayout>
+
+<style>
+  .product {
+    max-width: 72ch;
+    margin: 0 auto;
+    padding-top: var(--space-3);
+  }
+
+  .product h1 {
+    margin-top: var(--space-5);
+    font-size: clamp(1.7rem, 1.3rem + 1.7vw, 2.4rem);
+  }
+
+  .product__meta {
+    margin-top: var(--space-2);
+    color: var(--color-ink-faint);
+    font-size: 0.85rem;
+  }
+
+  .product__summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-4);
+    margin-top: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-surface-sunken);
+    border-radius: var(--radius-md);
+  }
+
+  .product__rating-block {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .product__rating-value {
+    font-weight: 700;
+    font-family: var(--font-display);
+  }
+
+  .product__rating-label {
+    font-size: 0.75rem;
+    color: var(--color-ink-faint);
+  }
+
+  .product__best-for,
+  .product__tag {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 0.88rem;
+    color: var(--color-ink-soft);
+  }
+
+  .product__best-for strong,
+  .product__tag strong {
+    color: var(--color-ink);
+  }
+
+  .product__pros-cons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    margin-top: var(--space-5);
+  }
+
+  @media (max-width: 560px) {
+    .product__pros-cons {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .pros,
+  .cons {
+    padding: var(--space-4);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+  }
+
+  .pros {
+    background: var(--color-brand-tint);
+  }
+
+  .cons {
+    background: var(--color-surface-sunken);
+  }
+
+  .pros h2,
+  .cons h2 {
+    font-size: 0.95rem;
+  }
+
+  .pros ul,
+  .cons ul {
+    margin-top: var(--space-2);
+    list-style: none;
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .pros li,
+  .cons li {
+    font-size: 0.88rem;
+    padding-left: 1.2em;
+    position: relative;
+    color: var(--color-ink-soft);
+  }
+
+  .pros li::before {
+    content: '+';
+    position: absolute;
+    left: 0;
+    font-weight: 700;
+    color: var(--color-brand-dark);
+  }
+
+  .cons li::before {
+    content: '–';
+    position: absolute;
+    left: 0;
+    font-weight: 700;
+    color: var(--color-accent-dark);
+  }
+
+  .product__body {
+    max-width: none;
+    padding-block: 0;
+    margin-top: var(--space-2);
+  }
+
+  .product__related {
+    margin-top: var(--space-6);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .product__related h2 {
+    font-size: 1.2rem;
+  }
+
+  .product__related-grid {
+    margin-top: var(--space-4);
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  }
+
+  .product__hub-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    margin-top: var(--space-5);
+    color: var(--color-brand-dark);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+  }
+
+  .product__hub-link:hover {
+    text-decoration: underline;
+  }
+</style>

@@ -1,0 +1,543 @@
+---
+import {
+  SITE,
+  NAV,
+  ANIMALS,
+  SECTIONS,
+  builtCategories,
+  type CategorizedAnimal
+} from '../site.config';
+import Icon from './Icon.astro';
+import SearchModal from './SearchModal.astro';
+
+const currentPath = Astro.url.pathname;
+const isActive = (href: string) =>
+  href === '/' ? currentPath === '/' : currentPath.startsWith(href);
+
+// Cada animal en el desplegable muestra: categorías (perros/gatos/acuarios)
+// o secciones (otras-mascotas, modelo legacy) — mismo componente visual,
+// mismo shape {slug,label,icon,href}, distinta fuente de datos.
+const navGroups = ANIMALS.map((animal) => {
+  const href = `/${animal.slug}/`;
+  const items =
+    animal.slug === 'otras-mascotas'
+      ? SECTIONS['otras-mascotas'].map((s) => ({
+          slug: s.slug,
+          label: s.label,
+          icon: s.icon,
+          href: `/${animal.slug}/${s.slug}/`
+        }))
+      : builtCategories(animal.slug as CategorizedAnimal).map((c) => ({
+          slug: c.slug,
+          label: c.label,
+          icon: c.icon,
+          href: `/${animal.slug}/${c.slug}/`
+        }));
+  return { animal, href, items };
+});
+---
+
+<header class="header">
+  <div class="header__inner wrap">
+    <a class="brand" href="/">
+      <span class="brand__mark"><Icon name="paw" size={22} /></span>
+      <span class="brand__word">{SITE.name}</span>
+    </a>
+
+    <nav class="nav nav--desktop" aria-label="Navegación principal">
+      <ul>
+        {
+          navGroups.map(({ animal, href, items }) => (
+            <li class="nav-item">
+              <a
+                href={href}
+                aria-current={isActive(href) ? 'page' : undefined}
+                aria-haspopup="true"
+                class:list={['nav__link', { 'is-active': isActive(href) }]}
+              >
+                {animal.label}
+                <Icon name="chevronDown" size={13} class="nav-item__chevron" />
+              </a>
+              {items.length > 0 && (
+                <div class="nav-dropdown">
+                  <div class="nav-dropdown__panel">
+                    <ul>
+                      {items.map((item) => (
+                        <li>
+                          <a class="nav-dropdown__link" href={item.href}>
+                            <Icon name={item.icon} size={16} />
+                            <span>{item.label}</span>
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                    <a class="nav-dropdown__all" href={href}>
+                      Ver todo {animal.label.toLowerCase()}
+                      <Icon name="chevronRight" size={13} />
+                    </a>
+                  </div>
+                </div>
+              )}
+            </li>
+          ))
+        }
+        <li>
+          <a
+            href="/blog/"
+            aria-current={isActive('/blog/') ? 'page' : undefined}
+            class:list={['nav__link', { 'is-active': isActive('/blog/') }]}
+          >
+            Blog
+          </a>
+        </li>
+        <li>
+          <a
+            href="/sobre-nosotros/"
+            aria-current={isActive('/sobre-nosotros/') ? 'page' : undefined}
+            class:list={['nav__link', { 'is-active': isActive('/sobre-nosotros/') }]}
+          >
+            Sobre nosotros
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="header__actions">
+      <SearchModal />
+
+      <button
+        type="button"
+        class="nav-toggle"
+        id="nav-toggle"
+        aria-expanded="false"
+        aria-controls="mobile-nav"
+      >
+        <span class="nav-toggle__icon nav-toggle__icon--open">
+          <Icon name="menu" size={24} />
+        </span>
+        <span class="nav-toggle__icon nav-toggle__icon--close">
+          <Icon name="close" size={22} />
+        </span>
+        <span class="sr-only">Abrir menú</span>
+      </button>
+    </div>
+  </div>
+
+  <nav id="mobile-nav" class="nav nav--mobile" aria-label="Navegación móvil">
+    <ul class="wrap">
+      {
+        NAV.map((item, i) => (
+          <li style={`--i:${i}`}>
+            <a
+              href={item.href}
+              aria-current={isActive(item.href) ? 'page' : undefined}
+              class:list={['nav__link', { 'is-active': isActive(item.href) }]}
+            >
+              {item.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+</header>
+
+<script>
+  const toggle = document.getElementById('nav-toggle');
+  const mobileNav = document.getElementById('mobile-nav');
+
+  const closeNav = (returnFocus: boolean) => {
+    toggle?.setAttribute('aria-expanded', 'false');
+    mobileNav?.classList.remove('is-open');
+    document.body.classList.remove('nav-open');
+    if (returnFocus) toggle?.focus();
+  };
+
+  const openNav = () => {
+    toggle?.setAttribute('aria-expanded', 'true');
+    mobileNav?.classList.add('is-open');
+    document.body.classList.add('nav-open');
+    // Mueve el foco dentro del panel: quien navega con teclado o lector de
+    // pantalla debe aterrizar en el contenido que se acaba de abrir, no
+    // quedarse "detrás" en el botón que ya no tiene la misma función.
+    mobileNav?.querySelector('a')?.focus();
+  };
+
+  toggle?.addEventListener('click', () => {
+    const isOpen = toggle.getAttribute('aria-expanded') === 'true';
+    if (isOpen) closeNav(false);
+    else openNav();
+  });
+
+  mobileNav?.querySelectorAll('a').forEach((link) => {
+    link.addEventListener('click', () => closeNav(false));
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && toggle?.getAttribute('aria-expanded') === 'true') {
+      closeNav(true);
+    }
+  });
+
+  // Edge effect: el header solo muestra separación (blur más fuerte + borde)
+  // una vez que hay contenido debajo con el que separarse, no como línea fija.
+  const header = document.querySelector('.header');
+  const setScrolled = () => header?.classList.toggle('is-scrolled', window.scrollY > 4);
+  setScrolled();
+  window.addEventListener('scroll', setScrolled, { passive: true });
+</script>
+
+<style>
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(251, 247, 240, 0.72);
+    backdrop-filter: blur(10px) saturate(160%);
+    -webkit-backdrop-filter: blur(10px) saturate(160%);
+    border-bottom: 1px solid transparent;
+    box-shadow: 0 1px 0 transparent;
+    transition:
+      background-color var(--duration-slow) var(--ease-out),
+      border-color var(--duration-slow) var(--ease-out),
+      box-shadow var(--duration-slow) var(--ease-out);
+  }
+
+  /* Edge effect: al hacer scroll, el header se "materializa" un poco más
+     (más opaco, sombra sutil) en vez de tener una línea divisoria fija. */
+  .header.is-scrolled {
+    background: rgba(251, 247, 240, 0.88);
+    border-bottom-color: var(--color-border);
+    box-shadow: var(--shadow-sm);
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .header,
+    .header.is-scrolled {
+      background: var(--color-bg);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border-bottom-color: var(--color-border);
+    }
+  }
+
+  .header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding-block: var(--space-4);
+  }
+
+  .header__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    text-decoration: none;
+    color: var(--color-brand-dark);
+  }
+
+  .brand__mark {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-md);
+    background: var(--color-brand);
+    color: #fff;
+  }
+
+  .brand__word {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 600;
+  }
+
+  /* Desktop nav */
+  .nav--desktop ul {
+    display: flex;
+    gap: var(--space-6);
+  }
+
+  .nav__link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding-block: var(--space-1);
+    text-decoration: none;
+    color: var(--color-ink-soft);
+    font-weight: 500;
+    font-size: 0.95rem;
+  }
+
+  .nav__link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    width: 100%;
+    height: 2px;
+    background: var(--color-accent);
+    border-radius: var(--radius-pill);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--duration-base) var(--ease-out);
+  }
+
+  .nav__link.is-active {
+    color: var(--color-ink);
+  }
+
+  .nav__link.is-active::after {
+    transform: scaleX(1);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .nav__link:hover {
+      color: var(--color-ink);
+    }
+
+    .nav__link:hover::after {
+      transform: scaleX(1);
+    }
+  }
+
+  /* Desplegable de secciones por animal */
+  .nav-item {
+    position: relative;
+  }
+
+  .nav-item__chevron {
+    transition: transform var(--duration-fast) var(--ease-out);
+  }
+
+  .nav-dropdown {
+    position: absolute;
+    top: 100%;
+    left: calc(-1 * var(--space-3));
+    /* padding-top (no margin-top): este hueco sigue formando parte de la
+       caja de .nav-dropdown, así que el ratón nunca pasa por una zona
+       "muerta" sin ningún elemento debajo al bajar desde el enlace hasta
+       el panel — evita que el desplegable se cierre antes de llegar. */
+    padding-top: var(--space-3);
+    min-width: 230px;
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+    transform-origin: top left;
+    pointer-events: none;
+    transition:
+      opacity var(--duration-fast) var(--ease-out),
+      transform var(--duration-fast) var(--ease-out);
+    z-index: 60;
+  }
+
+  .nav-dropdown__panel {
+    padding: var(--space-2);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* El foco (teclado) siempre puede abrirlo, en cualquier dispositivo. El
+     hover con ratón solo se activa si hay puntero fino de verdad, para no
+     dejarlo "pegado" abierto en pantallas táctiles. */
+  .nav-item:focus-within .nav-dropdown {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .nav-item:focus-within .nav-item__chevron {
+    transform: rotate(180deg);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .nav-item:hover .nav-dropdown {
+      opacity: 1;
+      transform: none;
+      pointer-events: auto;
+    }
+
+    .nav-item:hover .nav-item__chevron {
+      transform: rotate(180deg);
+    }
+  }
+
+  .nav-dropdown ul {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .nav-dropdown__link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    color: var(--color-ink-soft);
+    font-size: 0.9rem;
+    transition: background-color var(--duration-fast) var(--ease-out);
+  }
+
+  .nav-dropdown__link :global(svg) {
+    color: var(--color-brand-dark);
+  }
+
+  .nav-dropdown__link:hover,
+  .nav-dropdown__link:focus-visible {
+    background: var(--color-surface-sunken);
+    color: var(--color-ink);
+  }
+
+  .nav-dropdown__all {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border-top: 1px solid var(--color-border);
+    color: var(--color-brand-dark);
+    font-weight: 600;
+    font-size: 0.82rem;
+    text-decoration: none;
+  }
+
+  .nav-dropdown__all:hover {
+    text-decoration: underline;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav-dropdown {
+      transform: none;
+      transition: opacity var(--duration-base) ease;
+    }
+  }
+
+  /* Mobile toggle button */
+  .nav-toggle {
+    display: none;
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    align-items: center;
+    justify-content: center;
+    color: var(--color-ink);
+  }
+
+  .nav-toggle__icon {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    transition:
+      opacity var(--duration-fast) var(--ease-out),
+      transform var(--duration-fast) var(--ease-out);
+  }
+
+  .nav-toggle__icon--close {
+    opacity: 0;
+    transform: scale(0.8) rotate(-45deg);
+  }
+
+  body.nav-open .nav-toggle__icon--open {
+    opacity: 0;
+    transform: scale(0.8) rotate(45deg);
+  }
+
+  body.nav-open .nav-toggle__icon--close {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  /* Mobile nav panel */
+  .nav--mobile {
+    display: none;
+  }
+
+  /* 959px, no 767px: con 6 enlaces + desplegables + buscador, el nav de
+     escritorio necesita ~892px de ancho mínimo y no cabe en tablets en
+     vertical (iPad, 768px; iPad Air, 820px; iPad Pro 11", 834px) — se
+     comprobó el punto de ruptura real en el navegador antes de fijar este
+     valor, con margen para no quedar al límite. */
+  @media (max-width: 959px) {
+    .nav--desktop {
+      display: none;
+    }
+
+    .nav-toggle {
+      display: grid;
+    }
+
+    .nav--mobile {
+      display: block;
+      max-height: 0;
+      overflow: hidden;
+      border-top: 1px solid transparent;
+      box-shadow: 0 12px 24px -16px transparent;
+      transition:
+        max-height var(--duration-slow) var(--ease-in-out),
+        border-color var(--duration-slow),
+        box-shadow var(--duration-slow) var(--ease-out);
+    }
+
+    .nav--mobile.is-open {
+      max-height: 20rem;
+      border-top-color: var(--color-border);
+      box-shadow: 0 12px 24px -16px rgba(60, 46, 24, 0.22);
+    }
+
+    .nav--mobile ul {
+      display: flex;
+      flex-direction: column;
+      padding-block: var(--space-3);
+    }
+
+    .nav--mobile .nav__link {
+      display: block;
+      padding: var(--space-3) 0;
+      font-size: 1.05rem;
+      opacity: 0;
+      transform: translateY(-6px);
+      transition:
+        opacity var(--duration-base) var(--ease-out),
+        transform var(--duration-base) var(--ease-out);
+      transition-delay: calc(var(--i, 0) * 40ms);
+    }
+
+    .nav--mobile.is-open .nav__link {
+      opacity: 1;
+      transform: none;
+    }
+
+    .nav--mobile .nav__link::after {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav--mobile .nav__link {
+      transition: none;
+      opacity: 1;
+      transform: none;
+    }
+  }
+</style>

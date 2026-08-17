@@ -1,0 +1,64 @@
+---
+// Estrellas de valoración EDITORIAL (opinión propia del sitio, no la media
+// de reseñas de Amazon — no tenemos acceso a esos datos vía API). Se
+// etiqueta siempre como "nuestra valoración" allá donde se usa este
+// componente, para no dar la impresión de ser una puntuación de terceros.
+interface Props {
+  rating: number;
+  size?: number;
+}
+
+const { rating, size = 15 } = Astro.props;
+const rounded = Math.round(rating * 2) / 2;
+---
+
+<span class="stars" style={`--size:${size}px`} aria-hidden="true">
+  {
+    Array.from({ length: 5 }).map((_, i) => {
+      const fill = Math.max(0, Math.min(1, rounded - i));
+      return (
+        <span class="stars__item">
+          <svg viewBox="0 0 20 20" class="stars__base">
+            <path
+              d="M10 1.6l2.5 5.2 5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4 5.7-.8z"
+              fill="var(--color-border-strong)"
+            />
+          </svg>
+          {fill > 0 && (
+            <svg viewBox="0 0 20 20" class="stars__fill" style={`--fill:${fill}`}>
+              <path
+                d="M10 1.6l2.5 5.2 5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4 5.7-.8z"
+                fill="var(--color-accent)"
+              />
+            </svg>
+          )}
+        </span>
+      );
+    })
+  }
+</span>
+
+<style>
+  .stars {
+    display: inline-flex;
+    gap: 1px;
+  }
+
+  .stars__item {
+    position: relative;
+    width: var(--size);
+    height: var(--size);
+  }
+
+  .stars__base,
+  .stars__fill {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .stars__fill {
+    clip-path: inset(0 calc(100% - (var(--fill) * 100%)) 0 0);
+  }
+</style>

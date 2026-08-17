@@ -1,0 +1,372 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from './BaseLayout.astro';
+import AffiliateDisclosure from '../components/AffiliateDisclosure.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import BackToTop from '../components/BackToTop.astro';
+import ProductCard from '../components/ProductCard.astro';
+import ComparisonTable from '../components/ComparisonTable.astro';
+import FilterBlocks from '../components/FilterBlocks.astro';
+import FaqSection from '../components/FaqSection.astro';
+import Byline from '../components/Byline.astro';
+import CoverArt from '../components/CoverArt.astro';
+import {
+  SITE,
+  ANIMALS,
+  SECTIONS,
+  getCategory,
+  getType,
+  getTopicImage,
+  getTopicImageAlt,
+  type Animal,
+  type CategorizedAnimal
+} from '../site.config';
+
+interface Faq {
+  question: string;
+  answer: string;
+}
+
+interface Props {
+  title: string;
+  description: string;
+  pubDate: Date;
+  updatedDate?: Date;
+  animal: Animal;
+  // Modelo legacy (solo otras-mascotas):
+  seccion?: string;
+  // Modelo nuevo (perros/gatos/acuarios):
+  categoria?: string;
+  tipo?: string;
+  faqs?: Faq[];
+}
+
+const { title, description, pubDate, updatedDate, animal, seccion, categoria, tipo, faqs } =
+  Astro.props;
+
+const isNew = Boolean(categoria && tipo);
+const animalInfo = ANIMALS.find((a) => a.slug === animal)!;
+
+const sectionInfo = isNew
+  ? getType(animal as CategorizedAnimal, categoria!, tipo!)
+  : SECTIONS[animal as 'otras-mascotas'].find((s) => s.slug === seccion)!;
+
+const categoryInfo = isNew ? getCategory(animal as CategorizedAnimal, categoria!) : null;
+
+const basePath = isNew ? `/${animal}/${categoria}/${tipo}/` : `/${animal}/${seccion}/`;
+const coverSlug = isNew ? tipo! : seccion!;
+const heroImage = isNew ? getTopicImage(animal, categoria, tipo) : getTopicImage(animal, seccion);
+
+// Enlazado interno entre hermanos: dentro de una misma categoría/animal,
+// cada guía enlaza a las demás guías construidas del mismo grupo — refuerza
+// el descubrimiento de páginas que hoy dependen casi en exclusiva del
+// grid de su hub padre para recibir enlaces internos.
+const siblingTypes = isNew ? categoryInfo!.types.filter((t) => t.built && t.slug !== tipo) : [];
+const siblingSections = !isNew
+  ? SECTIONS[animal as 'otras-mascotas'].filter((s) => s.slug !== seccion)
+  : [];
+
+const allProducts = await getCollection('productos');
+const products = allProducts
+  .filter((p) =>
+    isNew
+      ? p.data.animal === animal && p.data.categoria === categoria && p.data.tipo === tipo
+      : p.data.animal === animal && p.data.seccion === seccion
+  )
+  .sort((a, b) => b.data.rating - a.data.rating);
+
+const breadcrumbItems = isNew
+  ? [
+      { label: 'Inicio', href: '/' },
+      { label: animalInfo.label, href: `/${animal}/` },
+      { label: categoryInfo!.label, href: `/${animal}/${categoria}/` },
+      { label: sectionInfo.label }
+    ]
+  : [
+      { label: 'Inicio', href: '/' },
+      { label: animalInfo.label, href: `/${animal}/` },
+      { label: sectionInfo.label }
+    ];
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: title,
+  description,
+  ...(heroImage ? { image: heroImage } : {}),
+  datePublished: pubDate.toISOString(),
+  dateModified: (updatedDate ?? pubDate).toISOString(),
+  author: { '@type': 'Organization', name: SITE.name },
+  publisher: { '@type': 'Organization', name: SITE.name },
+  ...(products.length > 0
+    ? {
+        mainEntity: {
+          '@type': 'ItemList',
+          itemListElement: products.map((p, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            url: new URL(`${basePath}${p.id}/`, SITE.url).toString(),
+            name: p.data.title
+          }))
+        }
+      }
+    : {})
+};
+
+const faqJsonLd =
+  faqs && faqs.length > 0
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: faqs.map((f) => ({
+          '@type': 'Question',
+          name: f.question,
+          acceptedAnswer: { '@type': 'Answer', text: f.answer }
+        }))
+      }
+    : null;
+---
+
+<BaseLayout title={title} description={description}>
+  <div class="wrap">
+    <Breadcrumbs items={breadcrumbItems} />
+
+    <article class="hub">
+      <header class="hub__head" data-reveal>
+        <CoverArt
+          seccion={coverSlug}
+          icon={sectionInfo.icon}
+          alt={
+            (isNew ? getTopicImageAlt(animal, categoria, tipo) : getTopicImageAlt(animal, seccion)) ??
+            `Foto de ${sectionInfo.label.toLowerCase()}`
+          }
+          ratio="banner"
+          imageUrl={heroImage}
+        />
+        <h1>{title}</h1>
+        <p class="hub__meta">
+          Publicado el{' '}
+          {pubDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+          {
+            updatedDate && (
+              <>
+                {' '}
+                · Actualizado el{' '}
+                {updatedDate.toLocaleDateString('es-ES', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric'
+                })}
+              </>
+            )
+          }
+        </p>
+        <Byline />
+      </header>
+
+      <AffiliateDisclosure />
+
+      {
+        products.length > 1 && (
+          <>
+            <h2 class="hub__compare-title" data-reveal>
+              Comparativa rápida
+            </h2>
+            <ComparisonTable basePath={basePath} products={products} />
+          </>
+        )
+      }
+
+      <div class="prose hub__body">
+        <slot />
+      </div>
+
+      {
+        products.length > 1 && (
+          <FilterBlocks products={products} />
+        )
+      }
+
+      {
+        products.length > 0 && (
+          <section
+            id="productos"
+            class="hub__products"
+            aria-label={`Productos analizados de ${sectionInfo.label.toLowerCase()}`}
+          >
+            <h2 data-reveal>
+              {sectionInfo.label} que hemos analizado
+              <span class="hub__count">{products.length}</span>
+            </h2>
+            <div class="hub__grid" data-product-grid>
+              {products.map((p, i) => (
+                <ProductCard
+                  href={`${basePath}${p.id}/`}
+                  title={p.data.title}
+                  description={p.data.description}
+                  rating={p.data.rating}
+                  bestFor={p.data.bestFor}
+                  revealDelay={i * 60}
+                  topPick={i === 0}
+                  seccion={coverSlug}
+                  icon={sectionInfo.icon}
+                  imageUrl={p.data.imageUrl}
+                  marca={p.data.marca}
+                  variante={p.data.variante}
+                  tamanos={p.data.tamanos}
+                  necesidades={p.data.necesidades}
+                />
+              ))}
+            </div>
+          </section>
+        )
+      }
+
+      {
+        siblingTypes.length > 0 && (
+          <nav class="hub__siblings" aria-label={`Más guías de ${categoryInfo!.label.toLowerCase()}`} data-reveal>
+            <h2 class="hub__siblings-title">Más guías de {categoryInfo!.label.toLowerCase()}</h2>
+            <ul class="hub__siblings-list">
+              {siblingTypes.map((t) => (
+                <li>
+                  <a href={`/${animal}/${categoria}/${t.slug}/`}>{t.label}</a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )
+      }
+
+      {
+        siblingSections.length > 0 && (
+          <nav class="hub__siblings" aria-label={`Otras secciones de ${animalInfo.label.toLowerCase()}`} data-reveal>
+            <h2 class="hub__siblings-title">Otras secciones de {animalInfo.label.toLowerCase()}</h2>
+            <ul class="hub__siblings-list">
+              {siblingSections.map((s) => (
+                <li>
+                  <a href={`/${animal}/${s.slug}/`}>{s.label}</a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )
+      }
+
+      {faqs && faqs.length > 0 && <FaqSection faqs={faqs} />}
+    </article>
+  </div>
+
+  <BackToTop />
+
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  {faqJsonLd && <script is:inline type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />}
+</BaseLayout>
+
+<style>
+  .hub {
+    max-width: 76ch;
+    margin: 0 auto;
+    padding-top: var(--space-3);
+  }
+
+  .hub__head h1 {
+    margin-top: var(--space-5);
+  }
+
+  .hub h1 {
+    font-size: clamp(1.7rem, 1.35rem + 1.6vw, 2.4rem);
+  }
+
+  .hub__meta {
+    margin-top: var(--space-1);
+    color: var(--color-ink-faint);
+    font-size: 0.85rem;
+  }
+
+  .hub__compare-title {
+    margin-top: var(--space-6);
+    font-size: 1.1rem;
+  }
+
+  .hub__body {
+    max-width: none;
+    padding-block: 0;
+    margin-top: var(--space-8);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .hub__products {
+    margin-top: var(--space-8);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .hub__products h2 {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 1.3rem;
+  }
+
+  .hub__count {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.6rem;
+    height: 1.6rem;
+    padding-inline: 0.4rem;
+    border-radius: var(--radius-pill);
+    background: var(--color-accent-tint);
+    color: var(--color-accent-dark);
+    font-size: 0.8rem;
+    font-family: var(--font-body);
+    font-weight: 700;
+  }
+
+  .hub__grid {
+    margin-top: var(--space-5);
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+
+  .hub__siblings {
+    margin-top: var(--space-8);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .hub__siblings-title {
+    font-size: 1.1rem;
+  }
+
+  .hub__siblings-list {
+    margin-top: var(--space-4);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    list-style: none;
+    padding: 0;
+  }
+
+  .hub__siblings-list a {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--space-2) var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition:
+      border-color var(--duration-base) var(--ease-out),
+      color var(--duration-base) var(--ease-out);
+  }
+
+  .hub__siblings-list a:hover {
+    border-color: var(--color-brand);
+    color: var(--color-brand-dark);
+  }
+</style>

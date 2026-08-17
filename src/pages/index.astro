@@ -1,0 +1,733 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AdSlot from '../components/AdSlot.astro';
+import Icon from '../components/Icon.astro';
+import ProductCard from '../components/ProductCard.astro';
+import CoverArt from '../components/CoverArt.astro';
+import {
+  SITE,
+  ANIMALS,
+  getSection,
+  getType,
+  getTopicImage,
+  getTopicImageAlt,
+  inferBlogCover,
+  type CategorizedAnimal
+} from '../site.config';
+
+const allProductsByDate = (await getCollection('productos')).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+
+// "Últimas recomendaciones" no es solo un slice(0,6) por fecha: si el
+// último lote de productos añadidos cae todo dentro de un mismo pilar (p.
+// ej. varios de Perros el mismo día), la portada da la impresión de que
+// solo existe contenido de ese animal. Primero reservamos un hueco para el
+// más reciente de cada pilar con contenido, y solo después rellenamos el
+// resto por fecha — así la portada siempre representa los 4 pilares.
+const pillars: (typeof ANIMALS)[number]['slug'][] = ['perros', 'gatos', 'acuarios', 'otras-mascotas'];
+const pickedProducts: typeof allProductsByDate = [];
+const pickedIds = new Set<string>();
+for (const animal of pillars) {
+  const match = allProductsByDate.find((p) => p.data.animal === animal);
+  if (match) {
+    pickedProducts.push(match);
+    pickedIds.add(match.id);
+  }
+}
+for (const p of allProductsByDate) {
+  if (pickedProducts.length >= 6) break;
+  if (pickedIds.has(p.id)) continue;
+  pickedProducts.push(p);
+  pickedIds.add(p.id);
+}
+
+const latestProducts = pickedProducts.slice(0, 6).map((p) => {
+  const isLegacy = p.data.animal === 'otras-mascotas';
+  const href = isLegacy
+    ? `/${p.data.animal}/${p.data.seccion}/${p.id}/`
+    : `/${p.data.animal}/${p.data.categoria}/${p.data.tipo}/${p.id}/`;
+  const icon = isLegacy
+    ? getSection('otras-mascotas', p.data.seccion!).icon
+    : getType(p.data.animal as CategorizedAnimal, p.data.categoria!, p.data.tipo!).icon;
+  const coverSlug = isLegacy ? p.data.seccion! : p.data.tipo!;
+  return { entry: p, href, icon, coverSlug };
+});
+
+// El carrusel muestra TODOS los artículos (sin límite artificial de 3) —
+// el usuario descubre y recorre el catálogo completo desplazándose, no
+// solo una muestra fija.
+const allPosts = (await getCollection('blog')).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+
+// Fotos exclusivas del hero: no se reutilizan en ningún otro sitio de la
+// web (a diferencia de TOPIC_IMAGES, que sí se repite entre categoría,
+// tipo y blog) — así la portada tiene su propia identidad visual, más
+// editorial, en vez de anticipar lo que ya se ve más abajo.
+const HERO_PHOTOS = [
+  'https://images.unsplash.com/photo-1558788353-f76d92427f16?fm=jpg&q=80&w=900&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1679658347975-931dc15e438d?fm=jpg&q=80&w=700&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1522721161886-ecb3e3b9f3e6?fm=jpg&q=80&w=600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1705642798919-73b029f4725e?fm=jpg&q=80&w=600&auto=format&fit=crop'
+];
+---
+
+<BaseLayout title={SITE.tagline} description={SITE.description}>
+  <div class="wrap">
+    <section class="hero">
+      <div class="hero__pattern" aria-hidden="true"></div>
+      <div class="hero__inner">
+        <div class="hero__content">
+          <p class="hero__eyebrow hero__enter" style="--enter-delay:0ms">Guías honestas, sin relleno</p>
+          <h1 class="hero__title hero__enter" style="--enter-delay:70ms">{SITE.tagline}</h1>
+          <p class="hero__subtitle hero__enter" style="--enter-delay:140ms">{SITE.description}</p>
+          <div class="hero__actions hero__enter" style="--enter-delay:210ms">
+            <a class="btn btn-primary" href="#categorias">
+              Explorar guías
+              <Icon name="chevronRight" size={16} />
+            </a>
+            <a class="btn btn-ghost" href="/sobre-nosotros/">Cómo elegimos</a>
+          </div>
+        </div>
+
+        <div class="hero__mosaic hero__enter" style="--enter-delay:280ms" aria-hidden="true">
+          <img
+            class="hero-mosaic__photo hero-mosaic__photo--main"
+            src={HERO_PHOTOS[0]}
+            alt=""
+            loading="eager"
+            fetchpriority="high"
+            decoding="async"
+          />
+          <img class="hero-mosaic__photo hero-mosaic__photo--a1" src={HERO_PHOTOS[1]} alt="" loading="eager" decoding="async" />
+          <img class="hero-mosaic__photo hero-mosaic__photo--a2" src={HERO_PHOTOS[2]} alt="" loading="eager" decoding="async" />
+          <img class="hero-mosaic__photo hero-mosaic__photo--a3" src={HERO_PHOTOS[3]} alt="" loading="eager" decoding="async" />
+        </div>
+      </div>
+    </section>
+
+    <section id="categorias" class="categories" aria-label="Categorías">
+      {
+        ANIMALS.map((a, i) => (
+          <a
+            class="cat-card"
+            href={`/${a.slug}/`}
+            data-reveal
+            style={`--reveal-delay:${i * 70}ms`}
+          >
+            <CoverArt
+              seccion={a.slug}
+              icon={a.icon}
+              alt={getTopicImageAlt(a.slug) ?? `Foto de ${a.label.toLowerCase()}`}
+              ratio="card"
+              rounded="top"
+              imageUrl={getTopicImage(a.slug)}
+            />
+            <div class="cat-card__body">
+              <span class="cat-card__label">{a.label}</span>
+              <span class="cat-card__desc">{a.description}</span>
+              <span class="cat-card__arrow">
+                <Icon name="chevronRight" size={18} />
+              </span>
+            </div>
+          </a>
+        ))
+      }
+    </section>
+
+    <AdSlot variant="leaderboard" />
+
+    <section class="latest">
+      <div class="latest__head" data-reveal>
+        <h2>Últimas recomendaciones</h2>
+        <a class="latest__all" href="#categorias">Explorar todo</a>
+      </div>
+
+      {
+        latestProducts.length > 0 ? (
+          <div class="post-grid">
+            {latestProducts.map(({ entry: p, href, icon, coverSlug }, i) => (
+              <ProductCard
+                href={href}
+                title={p.data.title}
+                description={p.data.description}
+                rating={p.data.rating}
+                bestFor={p.data.bestFor}
+                revealDelay={i * 60}
+                seccion={coverSlug}
+                icon={icon}
+                imageUrl={p.data.imageUrl}
+                marca={p.data.marca}
+                variante={p.data.variante}
+                tamanos={p.data.tamanos}
+                necesidades={p.data.necesidades}
+              />
+            ))}
+          </div>
+        ) : (
+          <p>Todavía no hay productos publicados. ¡Vuelve pronto!</p>
+        )
+      }
+    </section>
+
+    {
+      allPosts.length > 0 && (
+        <section class="blog-carousel" data-reveal>
+          <div class="latest__head">
+            <div>
+              <h2>Del blog</h2>
+              <p class="blog-carousel__count">{allPosts.length} artículos para descubrir</p>
+            </div>
+            <a class="latest__all" href="/blog/">Ver todo el blog</a>
+          </div>
+
+          <div class="blog-carousel__wrap">
+            <button
+              type="button"
+              class="blog-carousel__arrow blog-carousel__arrow--prev"
+              data-carousel-prev
+              aria-label="Artículos anteriores"
+            >
+              <Icon name="chevronRight" size={18} />
+            </button>
+
+            <ul class="blog-carousel__track" data-carousel-track>
+              {allPosts.map((post) => {
+                const cover = inferBlogCover(post.data.title);
+                return (
+                  <li class="blog-carousel__slide">
+                    <a class="blog-teaser__card" href={`/blog/${post.id}/`}>
+                      <CoverArt
+                        seccion={cover.seccion}
+                        icon={cover.icon}
+                        alt={cover.alt ?? post.data.title}
+                        ratio="card"
+                        rounded="top"
+                        seed={post.id}
+                        imageUrl={cover.imageUrl}
+                      />
+                      <div class="blog-teaser__body">
+                        <span class="blog-teaser__eyebrow">Blog</span>
+                        <h3>{post.data.title}</h3>
+                        <p>{post.data.description}</p>
+                        <span class="blog-teaser__meta">
+                          {post.data.pubDate.toLocaleDateString('es-ES', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric'
+                          })}
+                        </span>
+                        <span class="blog-teaser__read">
+                          Leer artículo
+                          <Icon name="chevronRight" size={14} />
+                        </span>
+                      </div>
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+
+            <button
+              type="button"
+              class="blog-carousel__arrow blog-carousel__arrow--next"
+              data-carousel-next
+              aria-label="Artículos siguientes"
+            >
+              <Icon name="chevronRight" size={18} />
+            </button>
+          </div>
+        </section>
+      )
+    }
+  </div>
+</BaseLayout>
+
+<script>
+  // Carrusel horizontal nativo (scroll-snap + scroll del navegador, sin
+  // librería): las flechas solo desplazan el scroll existente, no
+  // reimplementan el gesto — así el swipe táctil en móvil sigue siendo el
+  // scroll nativo del navegador, sin conflictos.
+  document.querySelectorAll<HTMLElement>('.blog-carousel').forEach((carousel) => {
+    const track = carousel.querySelector<HTMLElement>('[data-carousel-track]');
+    const prevBtn = carousel.querySelector<HTMLButtonElement>('[data-carousel-prev]');
+    const nextBtn = carousel.querySelector<HTMLButtonElement>('[data-carousel-next]');
+    if (!track || !prevBtn || !nextBtn) return;
+
+    function scrollByCard(direction: 1 | -1) {
+      const card = track!.querySelector<HTMLElement>('.blog-carousel__slide');
+      const distance = card ? card.getBoundingClientRect().width + 16 : track!.clientWidth * 0.8;
+      track!.scrollBy({ left: distance * direction, behavior: 'smooth' });
+    }
+
+    function updateEdges() {
+      const atStart = track!.scrollLeft <= 4;
+      const atEnd = track!.scrollLeft >= track!.scrollWidth - track!.clientWidth - 4;
+      prevBtn!.classList.toggle('is-hidden', atStart);
+      nextBtn!.classList.toggle('is-hidden', atEnd);
+    }
+
+    prevBtn.addEventListener('click', () => scrollByCard(-1));
+    nextBtn.addEventListener('click', () => scrollByCard(1));
+    track.addEventListener('scroll', updateEdges, { passive: true });
+    window.addEventListener('resize', updateEdges);
+    updateEdges();
+  });
+</script>
+
+<style>
+  /* Hero */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    margin-top: var(--space-6);
+    padding: var(--space-8) var(--space-6);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(155deg, var(--color-brand-dark), var(--color-brand));
+    color: #fff;
+    isolation: isolate;
+  }
+
+  .hero__pattern {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: 0.14;
+    background-image: radial-gradient(circle at 1px 1px, #fff 1.4px, transparent 0);
+    background-size: 22px 22px;
+    -webkit-mask-image: radial-gradient(ellipse at 15% 20%, black 0%, transparent 70%);
+    mask-image: radial-gradient(ellipse at 15% 20%, black 0%, transparent 70%);
+  }
+
+  .hero__inner {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: var(--space-8);
+    align-items: center;
+  }
+
+  @media (max-width: 860px) {
+    .hero__inner {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Composición editorial tipo moodboard: una foto ancla (rectangular,
+     recta) con tres acentos circulares más pequeños superpuestos en sus
+     bordes, a distinta profundidad y con un ligero giro cada uno — se lee
+     como un collage compuesto a mano, no como una rejilla mecánica. El
+     marco color crema (var(--color-surface)) imita una foto revelada
+     montada sobre passe-partout, coherente con la paleta cálida del
+     sitio. Se oculta en pantallas estrechas para no competir con el
+     texto ni obligar a un hero desproporcionadamente alto. */
+  .hero__mosaic {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    aspect-ratio: 1 / 1.02;
+    margin-inline: auto;
+  }
+
+  @media (max-width: 860px) {
+    .hero__mosaic {
+      display: none;
+    }
+  }
+
+  .hero-mosaic__photo {
+    position: absolute;
+    object-fit: cover;
+    box-shadow: 0 16px 34px -10px rgba(8, 18, 13, 0.55);
+    transition: transform var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out);
+  }
+
+  .hero-mosaic__photo--main {
+    top: 0;
+    left: 0;
+    width: 72%;
+    height: 76%;
+    border-radius: var(--radius-lg);
+    border: 5px solid var(--color-surface);
+    z-index: 1;
+  }
+
+  .hero-mosaic__photo--a1 {
+    bottom: 0;
+    right: 0;
+    width: 50%;
+    height: 50%;
+    border-radius: 50%;
+    border: 6px solid var(--color-surface);
+    transform: rotate(4deg);
+    z-index: 3;
+  }
+
+  .hero-mosaic__photo--a2 {
+    top: -3%;
+    right: -8%;
+    width: 30%;
+    height: 30%;
+    border-radius: 50%;
+    border: 5px solid var(--color-surface);
+    transform: rotate(-7deg);
+    z-index: 2;
+  }
+
+  .hero-mosaic__photo--a3 {
+    bottom: -5%;
+    left: 8%;
+    width: 25%;
+    height: 25%;
+    border-radius: 50%;
+    border: 5px solid var(--color-surface);
+    transform: rotate(-5deg);
+    z-index: 4;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .hero-mosaic__photo--main:hover {
+      transform: scale(1.03);
+    }
+
+    .hero-mosaic__photo--a1:hover {
+      transform: rotate(4deg) scale(1.06);
+    }
+
+    .hero-mosaic__photo--a2:hover {
+      transform: rotate(-7deg) scale(1.08);
+    }
+
+    .hero-mosaic__photo--a3:hover {
+      transform: rotate(-5deg) scale(1.08);
+    }
+  }
+
+  /* Entrada de la portada: se ve una vez por visita, así que se anima al
+     cargar (no al hacer scroll, ya está en el viewport desde el inicio). */
+  .hero__enter {
+    opacity: 0;
+    transform: translateY(10px);
+    animation: hero-enter var(--duration-slow) var(--ease-out) forwards;
+    animation-delay: var(--enter-delay, 0ms);
+  }
+
+  @keyframes hero-enter {
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero__enter {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .hero__eyebrow {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #d7ecdf;
+  }
+
+  .hero__title {
+    margin-top: var(--space-3);
+    color: #fff;
+    font-size: clamp(2.1rem, 1.5rem + 2.6vw, 3.4rem);
+    max-width: 18ch;
+  }
+
+  .hero__subtitle {
+    margin-top: var(--space-4);
+    max-width: 52ch;
+    color: #e6f1ea;
+    font-size: 1.05rem;
+  }
+
+  .hero__actions {
+    margin-top: var(--space-6);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  /* Category cards */
+  .categories {
+    margin-top: var(--space-7);
+    /* Los CTA "Explorar guías"/"Explorar todo" saltan aquí con ancla —
+       sin esto, el header sticky tapa el principio de la sección al
+       aterrizar. */
+    scroll-margin-top: calc(var(--space-4) * 2 + 38px + var(--space-4));
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: var(--space-4);
+  }
+
+  .cat-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    color: var(--color-ink);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition:
+      transform var(--duration-base) var(--ease-out),
+      box-shadow var(--duration-base) var(--ease-out),
+      border-color var(--duration-base) var(--ease-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .cat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--color-brand);
+    }
+
+    .cat-card:hover .cat-card__arrow {
+      transform: translateX(3px);
+    }
+  }
+
+  .cat-card:active {
+    transform: translateY(-1px) scale(0.99);
+  }
+
+  .cat-card__body {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding: var(--space-5);
+  }
+
+  .cat-card__label {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+
+  .cat-card__desc {
+    color: var(--color-ink-soft);
+    font-size: 0.9rem;
+  }
+
+  .cat-card__arrow {
+    position: absolute;
+    top: var(--space-5);
+    right: var(--space-5);
+    color: var(--color-ink-faint);
+    transition: transform var(--duration-base) var(--ease-out);
+  }
+
+  /* Latest posts */
+  .latest {
+    margin-top: var(--space-8);
+    padding-bottom: var(--space-6);
+  }
+
+  .latest__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+  }
+
+  .latest__all {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-brand-dark);
+    text-decoration: none;
+  }
+
+  .latest__all:hover {
+    text-decoration: underline;
+  }
+
+  .post-grid {
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  }
+
+  /* Blog carousel */
+  .blog-carousel {
+    margin-top: var(--space-8);
+    padding-bottom: var(--space-7);
+  }
+
+  .blog-carousel__count {
+    margin-top: 2px;
+    font-size: 0.85rem;
+    color: var(--color-ink-faint);
+  }
+
+  .blog-carousel__wrap {
+    position: relative;
+  }
+
+  .blog-carousel__track {
+    display: flex;
+    gap: var(--space-4);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 2px 2px var(--space-3);
+    margin: -2px -2px calc(-1 * var(--space-3));
+    list-style: none;
+    scrollbar-width: none;
+  }
+
+  .blog-carousel__track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .blog-carousel__slide {
+    flex: 0 0 auto;
+    width: min(80vw, 300px);
+    scroll-snap-align: start;
+  }
+
+  @media (min-width: 640px) {
+    .blog-carousel__slide {
+      width: 280px;
+    }
+  }
+
+  .blog-carousel__arrow {
+    position: absolute;
+    top: 40%;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-ink);
+    box-shadow: var(--shadow-md);
+    z-index: 5;
+    transition:
+      opacity var(--duration-fast) var(--ease-out),
+      transform var(--duration-fast) var(--ease-out);
+  }
+
+  .blog-carousel__arrow--prev {
+    left: calc(-1 * var(--space-3));
+  }
+
+  .blog-carousel__arrow--prev :global(svg) {
+    transform: rotate(180deg);
+  }
+
+  .blog-carousel__arrow--next {
+    right: calc(-1 * var(--space-3));
+  }
+
+  .blog-carousel__arrow.is-hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .blog-carousel__arrow:hover {
+      transform: scale(1.06);
+    }
+  }
+
+  /* En táctil el swipe nativo ya cubre la navegación; las flechas
+     flotantes solo estorbarían encima del contenido en pantallas
+     estrechas. */
+  @media (hover: none), (pointer: coarse) {
+    .blog-carousel__arrow {
+      display: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .blog-carousel__arrow {
+      display: none;
+    }
+  }
+
+  .blog-teaser__card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    color: var(--color-ink);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition:
+      transform var(--duration-base) var(--ease-out),
+      box-shadow var(--duration-base) var(--ease-out),
+      border-color var(--duration-base) var(--ease-out);
+  }
+
+  .blog-teaser__body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: var(--space-2);
+    padding: var(--space-4) var(--space-5) var(--space-5);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .blog-teaser__card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--color-brand);
+    }
+  }
+
+  .blog-teaser__eyebrow {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-accent-dark);
+  }
+
+  .blog-teaser__card h3 {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .blog-teaser__card p {
+    color: var(--color-ink-soft);
+    font-size: 0.88rem;
+  }
+
+  .blog-teaser__meta {
+    font-size: 0.78rem;
+    color: var(--color-ink-faint);
+  }
+
+  .blog-teaser__read {
+    margin-top: auto;
+    padding-top: var(--space-2);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-brand-dark);
+  }
+</style>

@@ -1,0 +1,87 @@
+---
+// Contenedor de anuncio con espacio reservado para evitar Cumulative Layout
+// Shift (CLS) cuando se cargue el script de AdSense.
+//
+// Se activa solo (sin tocar este archivo ni las páginas que lo usan) en
+// cuanto rellenes ADSENSE.clientId en site.config.ts con tu ID real — hasta
+// entonces no carga ningún script de terceros, solo reserva el hueco.
+//
+// Reglas que este componente ayuda a cumplir:
+// - CLS < 0.1: el alto está fijado por aspect-ratio, nunca por el contenido del anuncio.
+// - Densidad de anuncios: no coloques más de un AdSlot "large" por viewport;
+//   Google zero-fillea en silencio los slots que superan ~30% del viewport.
+// - below-the-fold: usa loading="lazy" (variant="below-fold") fuera del primer viewport.
+import { ADSENSE } from '../site.config';
+
+type Variant = 'leaderboard' | 'rectangle' | 'in-article';
+
+interface Props {
+  variant?: Variant;
+  belowFold?: boolean;
+  // ID del bloque de anuncio concreto dentro de tu cuenta de AdSense
+  // (Anuncios → Por unidad de anuncio). Cada AdSlot en el sitio debería
+  // tener el suyo — no reutilices el mismo slotId en dos sitios distintos
+  // de la página.
+  slotId?: string;
+}
+
+const { variant = 'rectangle', belowFold = false, slotId = '[AD_SLOT_ID]' }: Props = Astro.props;
+
+const dimensions: Record<Variant, { ratio: string; minHeight: string }> = {
+  leaderboard: { ratio: '728 / 90', minHeight: '90px' },
+  rectangle: { ratio: '300 / 250', minHeight: '250px' },
+  'in-article': { ratio: '336 / 280', minHeight: '280px' }
+};
+const { ratio, minHeight } = dimensions[variant];
+
+const isConfigured = ADSENSE.clientId !== '[ADSENSE_ID]' && slotId !== '[AD_SLOT_ID]';
+---
+
+<div
+  class="ad-slot"
+  data-ad-variant={variant}
+  data-lazy={belowFold ? 'true' : 'false'}
+  data-pagefind-ignore
+  style={`aspect-ratio: ${ratio}; min-height: ${minHeight};`}
+>
+  {
+    isConfigured ? (
+      // Sin push aquí: el <ins> se deja "crudo" y es CookieConsent.astro
+      // quien lo activa (createElement del script + adsbygoogle.push), y
+      // solo si hay consentimiento de publicidad. Empujar el anuncio en
+      // este script cargaría/mostraría publicidad antes de que el usuario
+      // decida, incumpliendo el consentimiento que el banner promete pedir.
+      <ins
+        class="adsbygoogle"
+        style="display:block;width:100%;height:100%"
+        data-ad-client={ADSENSE.clientId}
+        data-ad-slot={slotId}
+        data-ad-format="auto"
+        data-full-width-responsive="true"
+      />
+    ) : (
+      <span class="ad-slot__label">Publicidad</span>
+    )
+  }
+</div>
+
+<style>
+  .ad-slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    background: var(--color-surface-sunken);
+    border: 1px dashed var(--color-border-strong);
+    border-radius: var(--radius-md);
+    margin: var(--space-6) 0;
+    overflow: hidden;
+  }
+
+  .ad-slot__label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-ink-faint);
+  }
+</style>

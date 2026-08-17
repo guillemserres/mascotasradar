@@ -1,0 +1,19 @@
+---
+import CategoryHub from '../../../components/CategoryHub.astro';
+import { CATEGORIES, builtCategories, type CategorizedAnimal } from '../../../site.config';
+
+export async function getStaticPaths() {
+  const animals = Object.keys(CATEGORIES) as CategorizedAnimal[];
+  return animals.flatMap((animal) =>
+    // Solo generamos página para categorías con al menos un tipo construido
+    // — evita páginas vacías/finas (regla del cliente: calidad > cantidad).
+    builtCategories(animal).map((c) => ({
+      params: { animal, categoria: c.slug }
+    }))
+  );
+}
+
+const { animal, categoria } = Astro.params as { animal: CategorizedAnimal; categoria: string };
+---
+
+<CategoryHub animal={animal} categoria={categoria} />

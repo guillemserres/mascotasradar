@@ -1,0 +1,230 @@
+---
+// Filtros 100% client-side sobre la lista de productos ya renderizada — no
+// generan ninguna URL nueva por combinación (así lo pidió el cliente: los
+// filtros son navegación dentro de la página, no páginas SEO nuevas).
+//
+// Con catálogos pequeños, filtrar puede hacer más daño que bien: si cada
+// valor de una faceta coincide con un único producto, el filtro no agrupa
+// nada, solo añade pills que aíslan un solo resultado cada una. Por eso:
+// 1. Todo el bloque solo se muestra a partir de MIN_PRODUCTS productos —
+//    por debajo de eso, la comparativa de arriba ya se ve entera de un
+//    vistazo y filtrar no aporta.
+// 2. Dentro de cada grupo, se descartan los valores que solo coinciden con
+//    un producto — un filtro que aísla exactamente lo que ya se veía no es
+//    un filtro útil, es ruido.
+import type { CollectionEntry } from 'astro:content';
+import Icon from './Icon.astro';
+
+interface Props {
+  products: CollectionEntry<'productos'>[];
+}
+
+const { products } = Astro.props;
+
+const MIN_PRODUCTS_FOR_FILTERS = 6;
+
+// Valores que agrupan al menos 2 productos, ordenados alfabéticamente.
+function groupingValues(values: (string | undefined)[]): string[] {
+  const counts = new Map<string, number>();
+  for (const v of values) {
+    if (!v) continue;
+    counts.set(v, (counts.get(v) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .filter(([, count]) => count >= 2)
+    .map(([value]) => value)
+    .sort();
+}
+
+const variantes = groupingValues(products.map((p) => p.data.variante));
+const tamanos = groupingValues(products.flatMap((p) => p.data.tamanos ?? []));
+const necesidades = groupingValues(products.flatMap((p) => p.data.necesidades ?? []));
+const marcas = groupingValues(products.map((p) => p.data.marca));
+
+const groups =
+  products.length < MIN_PRODUCTS_FOR_FILTERS
+    ? []
+    : [
+        { key: 'variante', label: '¿Qué tipo buscas?', values: variantes },
+        { key: 'tamanos', label: 'Según el tamaño', values: tamanos },
+        { key: 'necesidades', label: 'Según la necesidad', values: necesidades },
+        { key: 'marca', label: 'Por marca', values: marcas }
+      ].filter((g) => g.values.length > 1);
+---
+
+{
+  groups.length > 0 && (
+    <div class="filters" data-reveal>
+      <p class="filters__label">
+        <Icon name="filter" size={15} />
+        Filtra para encontrar el tuyo
+      </p>
+      {groups.map((group) => (
+        <fieldset class="filters__group">
+          <legend>{group.label}</legend>
+          <div class="filters__pills">
+            {group.values.map((value) => (
+              <button type="button" class="filters__pill" data-filter-key={group.key} data-filter-value={value}>
+                {value}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+      ))}
+      <div class="filters__status" aria-live="polite">
+        <button type="button" class="filters__clear" data-filter-clear hidden>
+          Quitar filtros
+        </button>
+        <p class="filters__empty" data-filter-empty hidden>
+          Ningún producto coincide con esos filtros combinados — prueba a quitar alguno.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+<script>
+  const root = document.querySelector('.filters');
+  if (root) {
+    const pills = root.querySelectorAll<HTMLButtonElement>('.filters__pill');
+    const clearBtn = root.querySelector<HTMLButtonElement>('[data-filter-clear]');
+    const emptyMsg = root.querySelector<HTMLElement>('[data-filter-empty]');
+    // Los filtros viven dentro del mismo hub, pero el grid de productos está
+    // en otra sección de la página — lo buscamos en todo el documento.
+    const grid = document.querySelector<HTMLElement>('[data-product-grid]');
+
+    const active = new Map<string, Set<string>>();
+
+    function applyFilters() {
+      if (!grid) return;
+      let visibleCount = 0;
+      grid.querySelectorAll<HTMLElement>('[data-marca], [data-variante], [data-tamanos], [data-necesidades]').forEach((card) => {
+        let matches = true;
+        for (const [key, values] of active) {
+          if (values.size === 0) continue;
+          const cardValue = card.dataset[key] ?? '';
+          const cardValues = cardValue.split('|').filter(Boolean);
+          const hasMatch = cardValue && [...values].some((v) => cardValues.includes(v) || cardValue === v);
+          if (!hasMatch) {
+            matches = false;
+            break;
+          }
+        }
+        card.hidden = !matches;
+        if (matches) visibleCount += 1;
+      });
+
+      const anyActive = [...active.values()].some((s) => s.size > 0);
+      if (clearBtn) clearBtn.hidden = !anyActive;
+      if (emptyMsg) emptyMsg.hidden = !(anyActive && visibleCount === 0);
+    }
+
+    pills.forEach((pill) => {
+      pill.addEventListener('click', () => {
+        const key = pill.dataset.filterKey!;
+        const value = pill.dataset.filterValue!;
+        if (!active.has(key)) active.set(key, new Set());
+        const set = active.get(key)!;
+        const isOn = pill.classList.toggle('is-active');
+        if (isOn) set.add(value);
+        else set.delete(value);
+        applyFilters();
+      });
+    });
+
+    clearBtn?.addEventListener('click', () => {
+      active.forEach((set) => set.clear());
+      pills.forEach((p) => p.classList.remove('is-active'));
+      applyFilters();
+    });
+  }
+</script>
+
+<style>
+  .filters {
+    margin-top: var(--space-6);
+    padding: var(--space-5);
+    background: var(--color-surface-sunken);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+
+  .filters__label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--color-ink);
+  }
+
+  .filters__group {
+    margin-top: var(--space-4);
+    border: 0;
+    padding: 0;
+  }
+
+  .filters__group legend {
+    padding: 0;
+    margin-bottom: var(--space-2);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--color-ink-faint);
+  }
+
+  .filters__pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .filters__pill {
+    padding: 0.4rem 0.85rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border-strong);
+    background: var(--color-surface);
+    color: var(--color-ink-soft);
+    font-size: 0.83rem;
+    font-weight: 500;
+    transition:
+      background-color var(--duration-fast) var(--ease-out),
+      border-color var(--duration-fast) var(--ease-out),
+      color var(--duration-fast) var(--ease-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .filters__pill:hover {
+      border-color: var(--color-brand);
+      color: var(--color-ink);
+    }
+  }
+
+  .filters__pill:active {
+    transform: scale(0.97);
+  }
+
+  .filters__pill.is-active {
+    background: var(--color-brand);
+    border-color: var(--color-brand);
+    color: #fff;
+  }
+
+  .filters__status {
+    margin-top: var(--space-4);
+  }
+
+  .filters__clear {
+    font-size: 0.83rem;
+    font-weight: 600;
+    color: var(--color-accent-dark);
+    text-decoration: underline;
+  }
+
+  .filters__empty {
+    margin-top: var(--space-2);
+    font-size: 0.85rem;
+    color: var(--color-ink-soft);
+  }
+</style>

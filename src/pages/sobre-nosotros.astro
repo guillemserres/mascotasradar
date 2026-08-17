@@ -1,0 +1,73 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../site.config';
+---
+
+<BaseLayout
+  title="Sobre nosotros"
+  description={`Cómo elegimos y valoramos los productos en ${SITE.name}: valoración propia, pros y contras claros, comparativas y precios con fecha de comprobación.`}
+>
+  <div class="wrap">
+  <div class="prose">
+  <h1>Sobre nosotros</h1>
+
+  <p>
+    En {SITE.name} escribimos guías de compra y comparativas honestas sobre
+    productos para perros, gatos y otras mascotas. Nuestro objetivo es
+    ahorrarte tiempo de búsqueda y ayudarte a elegir productos que de verdad
+    mejoren el día a día de tu mascota, sin relleno ni listas genéricas
+    copiadas de una ficha de producto.
+  </p>
+
+  <p>
+    [Cuenta aquí quién escribe el contenido: tu experiencia con mascotas,
+    background relevante, o el equipo detrás del sitio. Google y los
+    lectores valoran saber quién hay detrás de las recomendaciones — esto
+    es parte de lo que se conoce como E-E-A-T (experiencia, especialización,
+    autoridad y confianza).]
+  </p>
+
+  <h2>Cómo trabajamos</h2>
+  <ul>
+    <li>
+      Cada producto recibe una <strong>valoración propia sobre 5</strong>,
+      señalada siempre como "nuestra valoración" — nunca la confundimos con
+      la media de reseñas de Amazon, que no controlamos ni podemos
+      verificar.
+    </li>
+    <li>
+      Explicamos <strong>para quién es ideal</strong> cada producto y
+      enumeramos sus puntos a favor y en contra por separado, no solo una
+      lista de características copiada de la ficha del fabricante.
+    </li>
+    <li>
+      Cuando mostramos un precio, indicamos la <strong>fecha en que lo
+      comprobamos</strong>, porque en Amazon cambia con frecuencia y no
+      queremos que te fíes de una cifra desactualizada.
+    </li>
+    <li>
+      En las categorías con varios productos analizados incluimos una{' '}
+      <strong>comparativa rápida</strong> uno al lado del otro, además de la
+      reseña individual de cada uno.
+    </li>
+    <li>
+      Comparamos productos por características, opiniones públicas
+      disponibles y relación calidad-precio antes de recomendarlos.
+    </li>
+    <li>
+      Indicamos siempre cuándo un enlace es de afiliado — ver nuestro{' '}
+      <a href="/aviso-afiliados/">aviso de afiliados</a>.
+    </li>
+    <li>
+      Actualizamos los artículos cuando cambian las opciones disponibles en
+      el mercado.
+    </li>
+  </ul>
+
+  <p>
+    ¿Tienes alguna sugerencia o corrección? Escríbenos desde la página de{' '}
+    <a href="/contacto/">contacto</a>.
+  </p>
+  </div>
+  </div>
+</BaseLayout>

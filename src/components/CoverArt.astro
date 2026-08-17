@@ -1,0 +1,247 @@
+---
+// Portada visual de una sección o producto. Todavía no tenemos productos
+// reales de Amazon (los 36 actuales son ASIN de ejemplo), así que en vez de
+// fingir fotografías de producto —lo que sería contenido engañoso— cada
+// sección tiene una portada ilustrada propia: gradiente + patrón + icono,
+// coherente con la marca. En cuanto haya un producto real con imagen de
+// Amazon, pasa `imageUrl` (la URL de Amazon, enlazada nunca alojada aquí,
+// tal y como exige Amazon Associates) y esta misma pieza la muestra en su
+// lugar sin tocar el resto del diseño.
+import Icon from './Icon.astro';
+import type { IconName } from './icons';
+
+type Ratio = 'card' | 'banner';
+
+interface Props {
+  seccion: string;
+  icon: IconName;
+  alt: string;
+  imageUrl?: string;
+  ratio?: Ratio;
+  // Semilla opcional (normalmente el slug/href del producto) para variar
+  // ligeramente el gradiente dentro de la misma familia de color del tipo.
+  // Sin ella, todos los productos de un mismo tipo comparten exactamente
+  // el mismo gradiente — indistinguibles a golpe de vista en una
+  // comparativa o grid. Con la semilla, cada tarjeta se distingue sin
+  // salirse de la paleta de marca. Se deja sin usar en las portadas
+  // "banner" (una sola por página, no hace falta diferenciarlas).
+  seed?: string;
+  // 'all' (por defecto) redondea las 4 esquinas — para cuando la portada
+  // es toda la tarjeta. 'top' solo redondea arriba — para cuando debajo
+  // sigue habiendo contenido con padding propio (tarjetas de pilar,
+  // blog...) y las esquinas inferiores deben quedar rectas para no
+  // desentonar con el borde de la tarjeta.
+  rounded?: 'all' | 'top';
+  // 'cover' (por defecto): la foto llena el marco entero, recortada —
+  // correcto para fotos reales de ambiente/tema (bancos de imágenes).
+  // 'contain': la foto se ve entera sin recortar, con margen alrededor —
+  // pensado para cuando `imageUrl` sea la foto de un producto real de
+  // Amazon, donde recortar el objeto sería engañoso.
+  fit?: 'cover' | 'contain';
+}
+
+const { seccion, icon, alt, imageUrl, ratio = 'card', seed, rounded = 'all', fit = 'cover' } = Astro.props;
+
+// Un par de tonos por sección, todos dentro de la misma familia editorial
+// cálida de la marca — nunca un color "de sistema" suelto que rompa el
+// conjunto.
+const GRADIENTS: Record<string, [string, string]> = {
+  camas: ['#b3591f', '#d9702f'],
+  arneses: ['#1f4a36', '#2f6b4f'],
+  juguetes: ['#a66a1f', '#d99a3d'],
+  rascadores: ['#8a4a4a', '#b5726f'],
+  comederos: ['#8a6a1f', '#c2952f'],
+  areneros: ['#5c6b5a', '#8a9c86'],
+  acuarios: ['#1f5a5a', '#2f8a8a'],
+  conejos: ['#a9685a', '#d1998a'],
+  roedores: ['#6b4a2f', '#a3754f'],
+  // Portadas a nivel de animal (los 4 pilares en la home) y del blog —
+  // familias de color propias, coherentes con el resto pero distinguibles
+  // entre sí a golpe de vista.
+  perros: ['#7a3f1f', '#b56a35'],
+  gatos: ['#7a3a52', '#b5637f'],
+  'otras-mascotas': ['#8a6a4a', '#c2a074'],
+  blog: ['#2f4f6b', '#4a7aa4']
+};
+
+function hashString(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
+function hexToHsl(hex: string): [number, number, number] {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h = 0;
+  let s = 0;
+  const l = (max + min) / 2;
+  const d = max - min;
+  if (d !== 0) {
+    s = d / (1 - Math.abs(2 * l - 1));
+    if (max === r) h = ((g - b) / d) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+  return [h, s * 100, l * 100];
+}
+
+function hslToHex(h: number, s: number, l: number): string {
+  const sat = s / 100;
+  const light = l / 100;
+  const c = (1 - Math.abs(2 * light - 1)) * sat;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = light - c / 2;
+  let [r, g, b] = [0, 0, 0];
+  if (h < 60) [r, g, b] = [c, x, 0];
+  else if (h < 120) [r, g, b] = [x, c, 0];
+  else if (h < 180) [r, g, b] = [0, c, x];
+  else if (h < 240) [r, g, b] = [0, x, c];
+  else if (h < 300) [r, g, b] = [x, 0, c];
+  else [r, g, b] = [c, 0, x];
+  const toHex = (v: number) => Math.round((v + m) * 255).toString(16).padStart(2, '0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+// Nudge pequeño y determinista (±5° de matiz, ±6% de luminosidad) —
+// suficiente para distinguir tarjetas sin salirse de la familia de color
+// de la sección.
+function shade(hex: string, seedNum: number): string {
+  const [h, s, l] = hexToHsl(hex);
+  const hueOffset = (seedNum % 11) - 5;
+  const lightOffset = ((seedNum >> 4) % 13) - 6;
+  const newL = Math.min(72, Math.max(28, l + lightOffset));
+  return hslToHex((h + hueOffset + 360) % 360, s, newL);
+}
+
+const [baseFrom, baseTo] = GRADIENTS[seccion] ?? GRADIENTS.camas;
+const seedNum = seed ? hashString(seed) : 0;
+const from = seed ? shade(baseFrom, seedNum) : baseFrom;
+const to = seed ? shade(baseTo, seedNum + 97) : baseTo;
+
+// Todas las fotos de TOPIC_IMAGES/CATEGORY_CARD_IMAGES/HERO_PHOTOS vienen de
+// Unsplash con un ancho fijo (w=1200) pensado para el caso más exigente
+// (banner). Servir ese mismo archivo de 1200px en una tarjeta de ~280px es
+// 3-4x más peso del necesario, sobre todo en móvil. Como Unsplash permite
+// pedir cualquier ancho vía query param, generamos un srcset con varios
+// tamaños a partir de esa misma URL — sin tocar nada si en el futuro
+// `imageUrl` es una foto de producto real de Amazon (esas no soportan este
+// parámetro, así que se sirven tal cual, sin srcset).
+const isUnsplash = imageUrl?.includes('images.unsplash.com') && /[?&]w=\d+/.test(imageUrl);
+const srcset = isUnsplash
+  ? [320, 480, 640, 900, 1200]
+      .map((w) => `${imageUrl!.replace(/([?&])w=\d+/, `$1w=${w}`)} ${w}w`)
+      .join(', ')
+  : undefined;
+// 'banner' ocupa el ancho de la columna de contenido (~720px, tope real del
+// layout); 'card' vive en una rejilla donde cada tarjeta ronda 230-380px.
+const sizes =
+  ratio === 'banner' ? '(max-width: 767px) 100vw, 720px' : '(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 320px';
+---
+
+{
+  imageUrl ? (
+    <div
+      class:list={[
+        'cover',
+        'cover--image',
+        `cover--${ratio}`,
+        `cover--fit-${fit}`,
+        { 'cover--top': rounded === 'top' }
+      ]}
+    >
+      <img
+        src={imageUrl}
+        srcset={srcset}
+        sizes={srcset ? sizes : undefined}
+        alt={alt}
+        loading={ratio === 'banner' ? 'eager' : 'lazy'}
+        fetchpriority={ratio === 'banner' ? 'high' : undefined}
+        decoding="async"
+      />
+    </div>
+  ) : (
+    <div
+      class:list={['cover', `cover--${ratio}`, { 'cover--top': rounded === 'top' }]}
+      style={`--from:${from};--to:${to}`}
+      role="img"
+      aria-label={alt}
+    >
+      <span class="cover__pattern" aria-hidden="true" />
+      <Icon name={icon} size={ratio === 'banner' ? 46 : 30} class="cover__icon" />
+    </div>
+  )
+}
+
+<style>
+  .cover {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    isolation: isolate;
+  }
+
+  .cover--card {
+    aspect-ratio: 16 / 10;
+  }
+
+  .cover--banner {
+    aspect-ratio: 21 / 9;
+  }
+
+  .cover--top {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  .cover:not(.cover--image) {
+    display: grid;
+    place-items: center;
+    background: linear-gradient(155deg, var(--from), var(--to));
+  }
+
+  .cover__pattern {
+    position: absolute;
+    inset: 0;
+    opacity: 0.18;
+    background-image: radial-gradient(circle at 1px 1px, #fff 1.3px, transparent 0);
+    background-size: 18px 18px;
+    -webkit-mask-image: radial-gradient(ellipse at 70% 20%, black 0%, transparent 70%);
+    mask-image: radial-gradient(ellipse at 70% 20%, black 0%, transparent 70%);
+  }
+
+  .cover :global(.cover__icon) {
+    color: rgba(255, 255, 255, 0.92);
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.15));
+  }
+
+  .cover--image {
+    background: var(--color-surface-sunken);
+  }
+
+  .cover--image img {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* Foto real de ambiente/tema: llena el marco entero, recortada. */
+  .cover--fit-cover img {
+    object-fit: cover;
+  }
+
+  /* Foto de producto real (futuro, vía Amazon): se ve entera, sin
+     recortar, con borde y margen — recortar un producto sería engañoso. */
+  .cover--fit-contain {
+    border: 1px solid var(--color-border);
+  }
+
+  .cover--fit-contain img {
+    object-fit: contain;
+    padding: var(--space-4);
+  }
+</style>

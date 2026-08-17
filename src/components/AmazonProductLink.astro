@@ -1,0 +1,140 @@
+---
+// Único componente que debe usarse para enlazar a un producto de Amazon.
+// Centraliza: inyección del tag de Associates, rel="sponsored" (requisito de
+// Google Search Central para enlaces de pago/comisión), apertura en pestaña
+// nueva, y el aviso de "precio a fecha de" que exige Amazon porque el precio
+// mostrado puede quedar desactualizado (cache máxima permitida: 1 hora).
+//
+// No se auto-cargan precios vía API: no hay credenciales de Creators API
+// todavía. El precio es opcional y manual; si no se indica, el botón sólo
+// invita a consultar el precio actual en Amazon (nunca se muestra un precio
+// sin fecha, para no dar la impresión de que es un dato en vivo).
+import { buildAmazonUrl } from '../lib/amazon';
+import Icon from './Icon.astro';
+
+interface Props {
+  asinOrUrl: string;
+  productName: string;
+  price?: string;
+  priceCheckedDate?: string; // formato libre, ej. "13 ago 2026"
+  label?: string;
+  // El nombre siempre se usa en el aria-label del botón (accesibilidad),
+  // pero mostrarlo también como texto visible solo aporta en listados
+  // (comparativas, grid de "otros productos") donde no hay un H1 al lado
+  // repitiéndolo ya. En la propia ficha de producto, justo debajo del H1,
+  // repetirlo es ruido — pásalo a `false` ahí.
+  showName?: boolean;
+}
+
+const {
+  asinOrUrl,
+  productName,
+  price,
+  priceCheckedDate,
+  label = 'Ver precio en Amazon',
+  showName = true
+} = Astro.props;
+
+const href = buildAmazonUrl(asinOrUrl);
+---
+
+<div class="amazon-cta">
+  <div class="amazon-cta__info">
+    {showName && <p class="amazon-cta__name">{productName}</p>}
+    {
+      price && priceCheckedDate ? (
+        <p class="amazon-cta__price">
+          Precio orientativo: <strong>{price}</strong> (consultado el{' '}
+          {priceCheckedDate}, puede haber cambiado)
+        </p>
+      ) : (
+        <p class="amazon-cta__price amazon-cta__price--nodata">
+          El precio se confirma en Amazon
+        </p>
+      )
+    }
+  </div>
+  <a
+    class="amazon-cta__button"
+    href={href}
+    target="_blank"
+    rel="sponsored noopener nofollow"
+    aria-label={`${label}: ${productName} (se abre en una pestaña nueva)`}
+  >
+    <Icon name="amazonCart" size={18} />
+    {label}
+  </a>
+</div>
+
+<style>
+  .amazon-cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-block: var(--space-5);
+    padding: var(--space-4) var(--space-5);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--duration-base) var(--ease-out);
+  }
+
+  .amazon-cta:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  .amazon-cta__info {
+    min-width: 0;
+  }
+
+  .amazon-cta__name {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--color-ink);
+  }
+
+  .amazon-cta__price {
+    margin-top: var(--space-1);
+    font-size: 0.82rem;
+    color: var(--color-ink-faint);
+  }
+
+  .amazon-cta__price strong {
+    color: var(--color-ink-soft);
+  }
+
+  .amazon-cta__button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-shrink: 0;
+    background: var(--color-amazon);
+    color: var(--color-amazon-ink);
+    font-weight: 700;
+    padding: 0.7rem 1.25rem;
+    border-radius: var(--radius-pill);
+    text-decoration: none;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    transition:
+      transform var(--duration-fast) var(--ease-out),
+      box-shadow var(--duration-fast) var(--ease-out),
+      background-color var(--duration-fast) var(--ease-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .amazon-cta__button:hover {
+      background: #ffad33;
+      box-shadow: var(--shadow-sm);
+      transform: translateY(-2px);
+    }
+  }
+
+  .amazon-cta__button:active {
+    transform: translateY(-1px) scale(0.97);
+  }
+</style>

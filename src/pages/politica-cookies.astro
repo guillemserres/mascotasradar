@@ -1,0 +1,101 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE, ADSENSE } from '../site.config';
+
+const adsenseConfigured = ADSENSE.clientId !== '[ADSENSE_ID]';
+const lastUpdated = 'agosto de 2026';
+---
+
+<BaseLayout
+  title="Política de cookies"
+  description="Qué cookies utiliza este sitio, con qué finalidad y cómo puedes gestionar tu consentimiento en cualquier momento."
+>
+  <div class="wrap">
+  <div class="prose">
+  <h1>Política de cookies</h1>
+
+  <p>
+    <em>
+      Revísala con un profesional antes de publicar el sitio y mantenla
+      sincronizada si cambias de proveedor de anuncios o añades analítica.
+      Esta página no constituye asesoramiento legal.
+    </em>
+  </p>
+
+  <h2>Qué es una cookie</h2>
+  <p>
+    Una cookie es un pequeño archivo que un sitio web guarda en tu
+    navegador para recordar información sobre tu visita, como tus
+    preferencias o, en el caso de cookies publicitarias, tu actividad de
+    navegación para mostrar anuncios más relevantes.
+  </p>
+
+  <h2>Cómo gestionamos tu consentimiento</h2>
+  <p>
+    Al entrar por primera vez a este sitio te mostramos un banner donde
+    puedes <strong>aceptar todas las cookies, rechazar las que no son
+    necesarias, o personalizar</strong> cada categoría por separado. Tu
+    elección se guarda en tu navegador y puedes cambiarla cuando quieras
+    pulsando <strong>«Preferencias de cookies»</strong> en el pie de
+    página, sin necesidad de borrar el historial ni volver a esta página.
+  </p>
+
+  <h2>Cookies necesarias</h2>
+  <p>
+    Imprescindibles para que el sitio cargue y funcione correctamente (por
+    ejemplo, para recordar tu elección de cookies). No requieren
+    consentimiento porque no son opcionales: sin ellas el sitio no
+    funcionaría.
+  </p>
+
+  <h2>Cookies de publicidad</h2>
+  <p>
+    {adsenseConfigured ? (
+      <>
+        Este sitio usa Google AdSense para mostrar anuncios. Google y sus
+        socios publicitarios pueden utilizar cookies para mostrar anuncios
+        personalizados en función de tu actividad de navegación. Estas
+        cookies <strong>solo se activan si aceptas la categoría
+        «Publicidad»</strong> en el banner o en el panel de preferencias;
+        si la rechazas, seguirás viendo el contenido con normalidad, sin
+        anuncios personalizados.
+      </>
+    ) : (
+      <>
+        Este sitio todavía no tiene activada la publicidad de Google
+        AdSense. El banner de cookies ya incluye la categoría
+        «Publicidad», lista para pedir tu consentimiento en cuanto se
+        active: esas cookies solo se cargarán si la aceptas explícitamente,
+        conforme al RGPD y la LSSI-CE.
+      </>
+    )}
+  </p>
+
+  <h2>Cookies de Amazon Associates</h2>
+  <p>
+    Los enlaces a productos de Amazon incluyen un identificador de afiliado
+    en la URL. Al hacer clic, Amazon puede colocar sus propias cookies en
+    tu navegador conforme a su política de privacidad, ajena a este sitio.
+  </p>
+
+  <h2>Cómo gestionar las cookies</h2>
+  <p>
+    Además del panel de preferencias de este sitio, puedes permitir,
+    bloquear o eliminar cookies mediante la configuración de tu navegador.
+    Bloquear las cookies técnicas esenciales puede afectar al
+    funcionamiento de algunas partes del sitio; bloquear las cookies
+    publicitarias no afecta a la navegación, solo a la personalización de
+    los anuncios que veas.
+  </p>
+
+  <h2>Más información</h2>
+  <p>
+    Para más detalles sobre el tratamiento de datos personales, consulta
+    nuestra <a href="/politica-privacidad/">Política de privacidad</a>.
+    Para dudas sobre esta política, escríbenos a {SITE.contactEmail}.
+  </p>
+
+  <p><small>Última actualización: {lastUpdated}</small></p>
+  </div>
+  </div>
+</BaseLayout>

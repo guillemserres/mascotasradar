@@ -1,0 +1,114 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import CookieConsent from '../components/CookieConsent.astro';
+import { SITE } from '../site.config';
+
+interface Props {
+  title: string;
+  description?: string;
+  noindex?: boolean;
+}
+
+const { title, description = SITE.description, noindex = false } = Astro.props;
+// Google trunca la etiqueta <title> en el buscador en torno a ~60-65
+// caracteres visibles. Si el título de la página ya es largo por sí solo
+// (habitual en guías y artículos con un título descriptivo completo),
+// añadir siempre "· MascotasRadar" solo garantiza que el corte se coma la
+// marca — mejor priorizar el título real y omitir el sufijo cuando no cabría
+// entero. No se acorta el título en sí (el H1 y el resto de la página
+// siguen mostrando el texto completo).
+// El sufijo " · MascotasRadar" son 16 caracteres — el límite se fija en
+// 65 - 16 = 49 para que cualquier título que SÍ reciba el sufijo se quede
+// siempre en 65 caracteres o menos. Si cambias SITE.name, recalcula este
+// número como 65 - (3 + SITE.name.length).
+const pageTitle =
+  title === SITE.name || title.length > 65 - (3 + SITE.name.length) ? title : `${title} · ${SITE.name}`;
+
+// Organization + WebSite en todas las páginas: identifica quién publica el
+// contenido de forma consistente (lo mismo que ya referencian los JSON-LD
+// de Article/Product como "publisher"/"author"). Sin potentialAction de
+// tipo SearchAction: el buscador (Pagefind) es 100% cliente, no existe una
+// URL de resultados con parámetro de búsqueda real a la que apuntar —
+// añadir un SearchAction ahí sería anunciar una funcionalidad que no
+// existe tal cual.
+const siteJsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: SITE.name,
+    url: SITE.url,
+    logo: new URL('/og-image.jpg', SITE.url).toString()
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: SITE.name,
+    url: SITE.url,
+    inLanguage: 'es-ES'
+  }
+];
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
+    <link rel="dns-prefetch" href="https://images.unsplash.com" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} data-pagefind-meta="description[content]" />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <link rel="canonical" href={new URL(Astro.url.pathname, SITE.url)} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_ES" />
+    <meta property="og:url" content={new URL(Astro.url.pathname, SITE.url).toString()} />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:image" content={new URL('/og-image.jpg', SITE.url).toString()} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={SITE.name} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={new URL('/og-image.jpg', SITE.url).toString()} />
+    <meta name="generator" content={Astro.generator} />
+    {siteJsonLd.map((entry) => <script type="application/ld+json" is:inline set:html={JSON.stringify(entry)} />)}
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Ir al contenido</a>
+    <Header />
+    <main id="main-content" data-pagefind-body>
+      <slot />
+    </main>
+    <Footer />
+    <CookieConsent />
+  </body>
+</html>
+
+<style>
+  main {
+    display: block;
+  }
+</style>
+
+<script>
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      }
+    },
+    { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
+  );
+
+  document.querySelectorAll('[data-reveal]').forEach((el) => observer.observe(el));
+</script>

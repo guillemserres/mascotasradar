@@ -1,0 +1,122 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import { NAV, SITE } from '../site.config';
+---
+
+<BaseLayout
+  title="Página no encontrada"
+  description={`Esta página no existe o se ha movido. Vuelve al inicio de ${SITE.name} para encontrar guías y productos para tu mascota.`}
+  noindex>
+  <div class="wrap">
+    <section class="not-found">
+      <span class="not-found__icon"><Icon name="paw" size={34} /></span>
+      <p class="not-found__code">404</p>
+      <h1>Esta página se ha escapado</h1>
+      <p class="not-found__text">
+        No encontramos lo que buscas. Puede que el enlace esté roto o que la
+        página se haya movido de sitio.
+      </p>
+
+      <div class="not-found__actions">
+        <a class="btn btn-primary-alt" href="/">Volver al inicio</a>
+      </div>
+
+      <nav class="not-found__nav" aria-label="Categorías">
+        <ul>
+          {
+            NAV.filter((item) => item.href !== '/sobre-nosotros/').map((item) => (
+              <li>
+                <a href={item.href}>{item.label}</a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .not-found {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    max-width: 46ch;
+    margin: 0 auto;
+    padding-block: var(--space-9) var(--space-8);
+  }
+
+  .not-found__icon {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-lg);
+    background: var(--color-brand-tint);
+    color: var(--color-brand-dark);
+  }
+
+  .not-found__code {
+    margin-top: var(--space-4);
+    font-family: var(--font-display);
+    font-size: 3.5rem;
+    font-weight: 600;
+    color: var(--color-border-strong);
+    line-height: 1;
+  }
+
+  .not-found h1 {
+    margin-top: var(--space-2);
+    font-size: 1.6rem;
+  }
+
+  .not-found__text {
+    margin-top: var(--space-3);
+    color: var(--color-ink-soft);
+  }
+
+  .not-found__actions {
+    margin-top: var(--space-6);
+  }
+
+  .btn-primary-alt {
+    background: var(--color-brand);
+    color: #fff;
+    box-shadow: var(--shadow-sm);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .btn-primary-alt:hover {
+      background: var(--color-brand-dark);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+  }
+
+  .not-found__nav {
+    margin-top: var(--space-7);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--color-border);
+    width: 100%;
+  }
+
+  .not-found__nav ul {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+  }
+
+  .not-found__nav a {
+    color: var(--color-brand-dark);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .not-found__nav a:hover {
+    text-decoration: underline;
+  }
+</style>

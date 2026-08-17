@@ -1,0 +1,284 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AdSlot from './AdSlot.astro';
+import Icon from './Icon.astro';
+import CoverArt from './CoverArt.astro';
+import Breadcrumbs from './Breadcrumbs.astro';
+import {
+  SITE,
+  ANIMALS,
+  SECTIONS,
+  builtCategories,
+  CATEGORY_CARD_IMAGES,
+  CATEGORY_CARD_ALT,
+  type Animal,
+  type CategorizedAnimal
+} from '../site.config';
+
+interface Props {
+  animal: Animal;
+}
+
+const { animal } = Astro.props;
+const animalInfo = ANIMALS.find((a) => a.slug === animal)!;
+const isLegacy = animal === 'otras-mascotas';
+
+const allProducts = await getCollection('productos', (entry) => entry.data.animal === animal);
+
+// Modelo legacy (otras-mascotas): tarjetas = secciones (como antes).
+const countBySeccion = new Map<string, number>();
+if (isLegacy) {
+  for (const p of allProducts) {
+    if (p.data.seccion) countBySeccion.set(p.data.seccion, (countBySeccion.get(p.data.seccion) ?? 0) + 1);
+  }
+}
+const sections = isLegacy ? SECTIONS['otras-mascotas'] : [];
+
+// Modelo nuevo: tarjetas = categorías con al menos un tipo construido.
+const categories = !isLegacy ? builtCategories(animal as CategorizedAnimal) : [];
+const countByCategoria = new Map<string, number>();
+if (!isLegacy) {
+  for (const p of allProducts) {
+    if (p.data.categoria) countByCategoria.set(p.data.categoria, (countByCategoria.get(p.data.categoria) ?? 0) + 1);
+  }
+}
+
+// Igual que en CategoryHub: animalInfo.description es la frase corta para
+// la tarjeta de la home, demasiado breve como meta description propia de
+// esta página — se amplía reutilizando datos reales ya existentes.
+const metaDescription = `${animalInfo.description} Guías y comparativas de productos para ${animalInfo.label.toLowerCase()}.`;
+
+// El label solo ("Perros") es un <title> válido pero deja intención de
+// búsqueda sobre la mesa — quien busca "productos para perros" o "guía
+// perros" no ve esas palabras en el snippet. Se amplía con el mismo par
+// guías/comparativas que ya se usa en el resto del sitio.
+const pageTitle = `${animalInfo.label}: guías y comparativas`;
+
+// CollectionPage + ItemList: identifica esta página como un listado de
+// categorías/secciones (no un artículo), con enlace directo a cada una —
+// mismos datos que ya se muestran en la rejilla, sin inventar nada nuevo.
+const listItems = isLegacy
+  ? sections.map((s, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: new URL(`/${animal}/${s.slug}/`, SITE.url).toString(),
+      name: s.label
+    }))
+  : categories.map((c, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: new URL(`/${animal}/${c.slug}/`, SITE.url).toString(),
+      name: c.label
+    }));
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: pageTitle,
+  description: metaDescription,
+  url: new URL(`/${animal}/`, SITE.url).toString(),
+  ...(listItems.length > 0 ? { mainEntity: { '@type': 'ItemList', itemListElement: listItems } } : {})
+};
+---
+
+<BaseLayout title={pageTitle} description={metaDescription}>
+  <div class="wrap">
+    <Breadcrumbs items={[{ label: 'Inicio', href: '/' }, { label: animalInfo.label }]} />
+
+    <header class="animal-head" data-reveal>
+      <span class="animal-head__icon"><Icon name={animalInfo.icon} size={30} /></span>
+      <div>
+        <h1>{animalInfo.label}</h1>
+        <p>{animalInfo.description}</p>
+      </div>
+    </header>
+
+    <AdSlot variant="leaderboard" />
+
+    <section class="sections-grid-section" aria-label={`Categorías de ${animalInfo.label.toLowerCase()}`}>
+      <h2 class="section-title" data-reveal>Categorías de {animalInfo.label.toLowerCase()}</h2>
+      <div class="sections-grid">
+      {
+        isLegacy
+          ? sections.map((s, i) => (
+              <a class="section-card" href={`/${animal}/${s.slug}/`} data-reveal style={`--reveal-delay:${i * 70}ms`}>
+                <CoverArt
+                  seccion={s.slug}
+                  icon={s.icon}
+                  alt={CATEGORY_CARD_ALT[`${animal}/${s.slug}`] ?? `Foto de ${s.label.toLowerCase()}`}
+                  ratio="card"
+                  rounded="top"
+                  imageUrl={CATEGORY_CARD_IMAGES[`${animal}/${s.slug}`]}
+                />
+                <div class="section-card__body">
+                  <span class="section-card__label">{s.label}</span>
+                  <span class="section-card__desc">{s.description}</span>
+                  <span class="section-card__count">{countBySeccion.get(s.slug) ?? 0} productos analizados</span>
+                  <span class="section-card__arrow">
+                    <Icon name="chevronRight" size={18} />
+                  </span>
+                </div>
+              </a>
+            ))
+          : categories.map((c, i) => (
+              <a class="section-card" href={`/${animal}/${c.slug}/`} data-reveal style={`--reveal-delay:${i * 70}ms`}>
+                <CoverArt
+                  seccion={c.slug}
+                  icon={c.icon}
+                  alt={CATEGORY_CARD_ALT[`${animal}/${c.slug}`] ?? `Foto de ${c.label.toLowerCase()}`}
+                  ratio="card"
+                  rounded="top"
+                  imageUrl={CATEGORY_CARD_IMAGES[`${animal}/${c.slug}`]}
+                />
+                <div class="section-card__body">
+                  <span class="section-card__label">{c.label}</span>
+                  <span class="section-card__desc">{c.description}</span>
+                  <span class="section-card__count">
+                    {countByCategoria.get(c.slug) ?? 0} productos analizados
+                  </span>
+                  <span class="section-card__arrow">
+                    <Icon name="chevronRight" size={18} />
+                  </span>
+                </div>
+              </a>
+            ))
+      }
+      </div>
+    </section>
+
+    <section class="animal-intro prose" aria-label={`Cómo está organizado ${animalInfo.label.toLowerCase()}`} data-reveal>
+      <h2>Cómo está organizado</h2>
+      <p>{animalInfo.intro}</p>
+    </section>
+  </div>
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+</BaseLayout>
+
+<style>
+  .animal-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin-top: var(--space-3);
+    margin-bottom: var(--space-6);
+  }
+
+  .animal-head__icon {
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+    border-radius: var(--radius-lg);
+    background: var(--color-brand-tint);
+    color: var(--color-brand-dark);
+  }
+
+  .animal-head h1 {
+    font-size: clamp(1.7rem, 1.4rem + 1.2vw, 2.3rem);
+  }
+
+  .animal-head p {
+    margin-top: var(--space-1);
+    color: var(--color-ink-soft);
+    max-width: 60ch;
+  }
+
+  .sections-grid-section {
+    margin-top: var(--space-6);
+  }
+
+  .section-title {
+    margin-top: 0;
+    font-size: 1.25rem;
+  }
+
+  .sections-grid {
+    margin-top: var(--space-5);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--space-4);
+  }
+
+  .animal-intro {
+    margin-top: var(--space-8);
+    padding-top: var(--space-6);
+    padding-bottom: 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .animal-intro h2 {
+    margin-top: 0;
+  }
+
+  .section-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    color: var(--color-ink);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition:
+      transform var(--duration-base) var(--ease-out),
+      box-shadow var(--duration-base) var(--ease-out),
+      border-color var(--duration-base) var(--ease-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .section-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--color-brand);
+    }
+
+    .section-card:hover .section-card__arrow {
+      transform: translateX(3px);
+    }
+  }
+
+  .section-card:active {
+    transform: translateY(-1px) scale(0.99);
+  }
+
+  .section-card__body {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding: var(--space-5);
+  }
+
+  .section-card__label {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 600;
+  }
+
+  .section-card__desc {
+    color: var(--color-ink-soft);
+    font-size: 0.88rem;
+  }
+
+  .section-card__count {
+    margin-top: var(--space-2);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--color-border);
+    width: 100%;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-accent-dark);
+  }
+
+  .section-card__arrow {
+    position: absolute;
+    top: var(--space-5);
+    right: var(--space-5);
+    color: var(--color-ink-faint);
+    transition: transform var(--duration-base) var(--ease-out);
+  }
+</style>

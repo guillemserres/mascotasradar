@@ -1,0 +1,64 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../site.config';
+---
+
+<BaseLayout
+  title="Aviso legal"
+  description={`Aviso legal de ${SITE.name}: identificación del titular, objeto del sitio, propiedad intelectual y exclusión de responsabilidad, conforme a la LSSI-CE.`}
+>
+  <div class="wrap">
+  <div class="prose">
+  <h1>Aviso legal</h1>
+
+  <p>
+    <em>
+      Plantilla de partida — rellena los datos identificativos reales
+      (obligatorios por el art. 10 de la LSSI-CE si operas como empresa o
+      autónomo en España) y revísala con un profesional antes de publicar el
+      sitio.
+    </em>
+  </p>
+
+  <h2>Datos identificativos</h2>
+  <ul>
+    <li>Titular: [Nombre completo o razón social]</li>
+    <li>NIF/CIF: [NIF/CIF]</li>
+    <li>Domicilio: [Dirección]</li>
+    <li>Correo de contacto: {SITE.contactEmail}</li>
+  </ul>
+
+  <h2>Objeto</h2>
+  <p>
+    {SITE.name} es un sitio editorial que publica guías, comparativas y
+    reseñas sobre productos para mascotas, y participa en el Programa de
+    Afiliados de Amazon EU (ver <a href="/aviso-afiliados/">Aviso de
+    afiliados</a>).
+  </p>
+
+  <h2>Propiedad intelectual</h2>
+  <p>
+    Los textos, imágenes propias y diseño de este sitio son propiedad de{' '}
+    {SITE.name} salvo que se indique lo contrario. Las marcas, logotipos e
+    imágenes de producto pertenecen a sus respectivos titulares.
+  </p>
+
+  <h2>Exclusión de responsabilidad</h2>
+  <p>
+    La información publicada tiene carácter divulgativo y no sustituye el
+    criterio de un veterinario u otro profesional cualificado ante cualquier
+    duda sobre la salud o el bienestar de tu mascota. Los precios y la
+    disponibilidad de los productos enlazados dependen de Amazon y pueden
+    variar sin previo aviso.
+  </p>
+
+  <h2>Legislación aplicable</h2>
+  <p>
+    Este aviso legal se rige por la legislación española, en particular la
+    Ley 34/2002 de Servicios de la Sociedad de la Información y Comercio
+    Electrónico (LSSI-CE) y el Reglamento General de Protección de Datos
+    (RGPD).
+  </p>
+  </div>
+  </div>
+</BaseLayout>

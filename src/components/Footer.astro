@@ -1,0 +1,143 @@
+---
+import { SITE } from '../site.config';
+import Icon from './Icon.astro';
+
+const year = new Date().getFullYear();
+
+const links = [
+  { label: 'Aviso de afiliados', href: '/aviso-afiliados/' },
+  { label: 'Privacidad', href: '/politica-privacidad/' },
+  { label: 'Cookies', href: '/politica-cookies/' },
+  { label: 'Aviso legal', href: '/aviso-legal/' },
+  { label: 'Sobre nosotros', href: '/sobre-nosotros/' },
+  { label: 'Contacto', href: '/contacto/' }
+];
+---
+
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <div class="footer__brand">
+      <span class="footer__mark"><Icon name="paw" size={18} /></span>
+      <span class="footer__name">{SITE.name}</span>
+    </div>
+
+    <p class="footer__disclosure">
+      Como Afiliado de Amazon, obtengo ingresos por las compras adscritas que
+      cumplen los requisitos aplicables.
+    </p>
+
+    <nav aria-label="Enlaces legales" class="footer__nav">
+      <ul>
+        {
+          links.map((link) => (
+            <li>
+              <a href={link.href}>{link.label}</a>
+            </li>
+          ))
+        }
+        <li>
+          <button type="button" data-cookie-reopen class="footer__cookie-btn">
+            Preferencias de cookies
+          </button>
+        </li>
+      </ul>
+    </nav>
+
+    <p class="footer__copy">&copy; {year} {SITE.name}. Todos los derechos reservados.</p>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    margin-top: var(--space-9);
+    background: var(--color-surface-sunken);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .footer__inner {
+    padding-block: var(--space-7) var(--space-6);
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .footer__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-brand-dark);
+  }
+
+  .footer__mark {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--radius-sm);
+    background: var(--color-brand);
+    color: #fff;
+  }
+
+  .footer__name {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.05rem;
+  }
+
+  .footer__disclosure {
+    max-width: 60ch;
+    font-size: 0.85rem;
+    color: var(--color-ink-soft);
+    line-height: 1.55;
+  }
+
+  .footer__nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-5);
+  }
+
+  .footer__nav a {
+    display: inline-block;
+    padding-block: 0.35rem;
+    margin-block: -0.35rem;
+    text-decoration: none;
+    font-size: 0.85rem;
+    color: var(--color-ink-soft);
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .footer__nav a:hover {
+      color: var(--color-brand-dark);
+    }
+  }
+
+  .footer__cookie-btn {
+    display: inline-block;
+    padding-block: 0.35rem;
+    margin-block: -0.35rem;
+    font: inherit;
+    font-size: 0.85rem;
+    color: var(--color-ink-soft);
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-underline-offset: 3px;
+    transition:
+      color var(--duration-fast) var(--ease-out),
+      text-decoration-color var(--duration-fast) var(--ease-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .footer__cookie-btn:hover {
+      color: var(--color-brand-dark);
+      text-decoration-color: currentColor;
+    }
+  }
+
+  .footer__copy {
+    font-size: 0.78rem;
+    color: var(--color-ink-faint);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-border);
+  }
+</style>

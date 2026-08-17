@@ -1,0 +1,39 @@
+---
+// Aviso de afiliación de Amazon. Debe aparecer ANTES del primer enlace de
+// afiliado en cualquier página que contenga uno (review, comparativa,
+// artículo con recomendaciones, portada de categoría). No lo quites de una
+// página con enlaces de Amazon: es un requisito de la FTC y de Amazon
+// Associates, no un adorno legal opcional.
+//
+// compact=true reduce el aviso a una línea para usarlo dentro de tarjetas de
+// producto individuales, además del aviso completo de la parte superior.
+interface Props {
+  compact?: boolean;
+}
+const { compact = false } = Astro.props;
+---
+
+<p class:list={['disclosure', { 'disclosure--compact': compact }]}>
+  Como Afiliado de Amazon, obtengo ingresos por las compras adscritas que
+  cumplen los requisitos aplicables.
+</p>
+
+<style>
+  .disclosure {
+    margin: var(--space-4) 0 var(--space-5);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-accent-tint);
+    border: 1px solid #eecead;
+    border-left: 3px solid var(--color-accent);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    color: var(--color-accent-dark);
+    line-height: 1.45;
+  }
+
+  .disclosure--compact {
+    margin: var(--space-2) 0;
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.75rem;
+  }
+</style>

@@ -1,0 +1,82 @@
+---
+interface Faq {
+  question: string;
+  answer: string;
+}
+
+interface Props {
+  faqs: Faq[];
+}
+
+const { faqs } = Astro.props;
+---
+
+<section class="faq" aria-label="Preguntas frecuentes">
+  <h2 data-reveal>Preguntas frecuentes</h2>
+  <div class="faq__list">
+    {
+      faqs.map((f, i) => (
+        <details class="faq__item" data-reveal style={`--reveal-delay:${i * 40}ms`}>
+          <summary>{f.question}</summary>
+          <p>{f.answer}</p>
+        </details>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  .faq {
+    margin-top: var(--space-8);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .faq h2 {
+    font-size: 1.3rem;
+  }
+
+  .faq__list {
+    margin-top: var(--space-4);
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .faq__item {
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .faq__item summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-family: var(--font-display);
+    color: var(--color-ink);
+    list-style: none;
+  }
+
+  .faq__item summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq__item summary::before {
+    content: '+';
+    display: inline-block;
+    width: 1.2em;
+    color: var(--color-brand-dark);
+    font-weight: 700;
+  }
+
+  .faq__item[open] summary::before {
+    content: '–';
+  }
+
+  .faq__item p {
+    margin-top: var(--space-2);
+    padding-left: 1.2em;
+    color: var(--color-ink-soft);
+    font-size: 0.92rem;
+  }
+</style>

@@ -1,0 +1,190 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import RatingStars from './RatingStars.astro';
+import Icon from './Icon.astro';
+
+interface Props {
+  basePath: string;
+  products: CollectionEntry<'productos'>[];
+}
+
+const { basePath, products } = Astro.props;
+---
+
+{
+  products.length > 1 && (
+    <div class="comparison" data-reveal>
+      <div class="comparison__scroll">
+        <table>
+          <caption class="sr-only">
+            Comparativa rápida de {products.length} productos en esta sección
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Producto</th>
+              <th scope="col">Valoración</th>
+              <th scope="col">Precio orientativo</th>
+              <th scope="col">Ideal para</th>
+              <th scope="col">
+                <span class="sr-only">Ver ficha</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {products.map((p, i) => (
+              <tr class:list={{ 'comparison__top-row': i === 0 }}>
+                <th scope="row">
+                  <a href={`${basePath}${p.id}/`}>{p.data.title}</a>
+                  {i === 0 && <span class="comparison__badge">Mejor valorado</span>}
+                </th>
+                <td>
+                  <span class="comparison__rating">
+                    <RatingStars rating={p.data.rating} size={13} />
+                    {p.data.rating.toFixed(1)}
+                  </span>
+                </td>
+                <td>{p.data.price ?? 'Ver en Amazon'}</td>
+                <td class="comparison__best-for">{p.data.bestFor}</td>
+                <td>
+                  <a class="comparison__link" href={`${basePath}${p.id}/`}>
+                    Ver ficha
+                    <Icon name="chevronRight" size={13} />
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="comparison__hint">
+        Desliza para ver toda la tabla · ordenado por nuestra valoración
+      </p>
+    </div>
+  )
+}
+
+<style>
+  .comparison {
+    margin-top: var(--space-5);
+  }
+
+  .comparison__scroll {
+    overflow-x: auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    min-width: 560px;
+  }
+
+  th,
+  td {
+    text-align: left;
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+    white-space: nowrap;
+  }
+
+  thead th {
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-ink-faint);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  tbody tr:last-child th,
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody th {
+    font-family: var(--font-body);
+    font-weight: 600;
+    white-space: normal;
+    min-width: 200px;
+  }
+
+  tbody th a {
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  tbody th a:hover {
+    color: var(--color-brand-dark);
+    text-decoration: underline;
+  }
+
+  .comparison__top-row {
+    background: var(--color-brand-tint);
+  }
+
+  .comparison__badge {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 0.15rem 0.55rem;
+    border-radius: var(--radius-pill);
+    background: var(--color-brand);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .comparison__best-for {
+    white-space: normal;
+    color: var(--color-ink-soft);
+    max-width: 26ch;
+  }
+
+  .comparison__rating {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-weight: 700;
+    color: var(--color-ink-soft);
+  }
+
+  .comparison__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    color: var(--color-brand-dark);
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 0.82rem;
+  }
+
+  .comparison__link:hover {
+    text-decoration: underline;
+  }
+
+  .comparison__hint {
+    margin-top: var(--space-2);
+    font-size: 0.75rem;
+    color: var(--color-ink-faint);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  @media (min-width: 700px) {
+    .comparison__hint {
+      display: none;
+    }
+  }
+</style>

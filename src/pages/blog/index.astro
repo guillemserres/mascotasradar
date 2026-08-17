@@ -1,0 +1,140 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import Icon from '../../components/Icon.astro';
+import CoverArt from '../../components/CoverArt.astro';
+import { inferBlogCover } from '../../site.config';
+
+const posts = (await getCollection('blog')).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+---
+
+<BaseLayout
+  title="Blog: cuidados y comportamiento de tu mascota"
+  description="Cuidados, comportamiento y checklists prácticos sobre perros, gatos y acuarios — más allá de qué producto comprar."
+>
+  <div class="wrap">
+    <Breadcrumbs items={[{ label: 'Inicio', href: '/' }, { label: 'Blog' }]} />
+
+    <header class="blog-head" data-reveal>
+      <h1>Blog</h1>
+      <p>Cuidados, comportamiento y checklists prácticos — no solo qué comprar, sino por qué.</p>
+    </header>
+
+    <ul class="post-list">
+      {
+        posts.map((post, i) => {
+          const cover = inferBlogCover(post.data.title);
+          return (
+            <li>
+              <a class="post-card" href={`/blog/${post.id}/`} data-reveal style={`--reveal-delay:${i * 60}ms`}>
+                <CoverArt
+                  seccion={cover.seccion}
+                  icon={cover.icon}
+                  alt={cover.alt ?? post.data.title}
+                  ratio="card"
+                  rounded="top"
+                  seed={post.id}
+                  imageUrl={cover.imageUrl}
+                />
+                <div class="post-card__body">
+                  <h2>{post.data.title}</h2>
+                  <p>{post.data.description}</p>
+                  <span class="post-card__read">
+                    Leer artículo
+                    <Icon name="chevronRight" size={14} />
+                  </span>
+                </div>
+              </a>
+            </li>
+          );
+        })
+      }
+    </ul>
+
+    {posts.length === 0 && <p class="empty">Todavía no hay artículos publicados.</p>}
+  </div>
+</BaseLayout>
+
+<style>
+  .blog-head {
+    margin-top: var(--space-3);
+    margin-bottom: var(--space-6);
+    max-width: 60ch;
+  }
+
+  .blog-head h1 {
+    font-size: clamp(1.7rem, 1.4rem + 1.2vw, 2.3rem);
+  }
+
+  .blog-head p {
+    margin-top: var(--space-2);
+    color: var(--color-ink-soft);
+  }
+
+  .post-list {
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+
+  .post-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    color: var(--color-ink);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition:
+      transform var(--duration-base) var(--ease-out),
+      box-shadow var(--duration-base) var(--ease-out),
+      border-color var(--duration-base) var(--ease-out);
+  }
+
+  .post-card__body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: var(--space-2);
+    padding: var(--space-4) var(--space-5) var(--space-5);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .post-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--color-brand);
+    }
+  }
+
+  .post-card h2 {
+    font-size: 1.1rem;
+    line-height: 1.35;
+  }
+
+  .post-card p {
+    color: var(--color-ink-soft);
+    font-size: 0.9rem;
+  }
+
+  .post-card__read {
+    margin-top: auto;
+    padding-top: var(--space-2);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-brand-dark);
+  }
+
+  .empty {
+    color: var(--color-ink-soft);
+  }
+</style>

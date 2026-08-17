@@ -1,0 +1,140 @@
+---
+import RatingStars from './RatingStars.astro';
+import CoverArt from './CoverArt.astro';
+import type { IconName } from './icons';
+
+interface Props {
+  href: string;
+  title: string;
+  description: string;
+  rating: number;
+  bestFor: string;
+  revealDelay?: number;
+  topPick?: boolean;
+  seccion: string;
+  icon: IconName;
+  imageUrl?: string;
+  // Facetas — solo se usan para filtrar client-side (FilterBlocks.astro
+  // lee estos data-attributes); ninguna genera una URL nueva.
+  marca?: string;
+  variante?: string;
+  tamanos?: string[];
+  necesidades?: string[];
+}
+
+const {
+  href,
+  title,
+  description,
+  rating,
+  bestFor,
+  revealDelay = 0,
+  topPick = false,
+  seccion,
+  icon,
+  imageUrl,
+  marca,
+  variante,
+  tamanos,
+  necesidades
+} = Astro.props;
+---
+
+<a
+  class="product-card"
+  href={href}
+  data-reveal
+  data-marca={marca}
+  data-variante={variante}
+  data-tamanos={tamanos?.join('|')}
+  data-necesidades={necesidades?.join('|')}
+  style={`--reveal-delay:${revealDelay}ms`}
+>
+  <CoverArt seccion={seccion} icon={icon} imageUrl={imageUrl} alt={title} ratio="card" seed={href} fit="contain" />
+  <div class="product-card__rating">
+    <RatingStars rating={rating} />
+    <span>{rating.toFixed(1)}</span>
+    {topPick && <span class="product-card__badge">Mejor valorado</span>}
+  </div>
+  <h3>{title}</h3>
+  {marca && <p class="product-card__brand">{marca}</p>}
+  <p>{description}</p>
+  <p class="product-card__best-for">
+    <strong>Ideal para:</strong> {bestFor}
+  </p>
+</a>
+
+<style>
+  .product-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    height: 100%;
+    padding: var(--space-5);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    color: var(--color-ink);
+    box-shadow: var(--shadow-sm);
+    transition:
+      transform var(--duration-base) var(--ease-out),
+      box-shadow var(--duration-base) var(--ease-out),
+      border-color var(--duration-base) var(--ease-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .product-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--color-brand);
+    }
+  }
+
+  .product-card__rating {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--color-ink-soft);
+  }
+
+  .product-card__badge {
+    padding: 0.15rem 0.55rem;
+    border-radius: var(--radius-pill);
+    background: var(--color-brand-tint);
+    color: var(--color-brand-dark);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .product-card h3 {
+    font-size: 1.05rem;
+    line-height: 1.35;
+  }
+
+  .product-card__brand {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--color-ink-faint);
+  }
+
+  .product-card p {
+    color: var(--color-ink-soft);
+    font-size: 0.87rem;
+  }
+
+  .product-card__best-for {
+    margin-top: auto;
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .product-card__best-for strong {
+    color: var(--color-ink);
+  }
+</style>

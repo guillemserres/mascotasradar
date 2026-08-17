@@ -1,0 +1,323 @@
+---
+import Icon from './Icon.astro';
+---
+
+<button type="button" id="search-open" class="search-trigger" aria-haspopup="dialog">
+  <Icon name="search" size={18} />
+  <span class="search-trigger__label">Buscar</span>
+</button>
+
+<div id="search-overlay" class="search-overlay">
+  <div
+    class="search-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Buscar en el sitio"
+  >
+    <div class="search-dialog__field">
+      <Icon name="search" size={18} />
+      <input
+        id="search-input"
+        type="search"
+        placeholder="Busca una guía o un producto…"
+        autocomplete="off"
+        aria-label="Buscar"
+      />
+      <button type="button" id="search-close" aria-label="Cerrar búsqueda">
+        <Icon name="close" size={18} />
+      </button>
+    </div>
+    <div id="search-results" class="search-results" aria-live="polite"></div>
+  </div>
+</div>
+
+<script is:inline>
+  // is:inline a propósito: si Astro/Vite empaquetara este script, intenta
+  // resolver el import dinámico de Pagefind en build — y ese archivo no
+  // existe todavía en ese momento (Pagefind indexa el `dist/` DESPUÉS de
+  // `astro build`, como paso aparte). Con is:inline el script se sirve tal
+  // cual y el import se resuelve en el navegador, en tiempo real, contra el
+  // archivo que sí existe ya en producción.
+  (function () {
+    var openBtn = document.getElementById('search-open');
+    var closeBtn = document.getElementById('search-close');
+    var overlay = document.getElementById('search-overlay');
+    var input = document.getElementById('search-input');
+    var results = document.getElementById('search-results');
+
+    var pagefind = null;
+    var loadError = false;
+
+    function loadPagefind() {
+      if (pagefind || loadError) return Promise.resolve();
+      return import('/pagefind/pagefind.js')
+        .then(function (mod) {
+          pagefind = mod;
+          return pagefind.init();
+        })
+        .catch(function () {
+          loadError = true;
+        });
+    }
+
+    function open() {
+      overlay.classList.add('is-visible');
+      document.body.classList.add('search-open');
+      input.focus();
+      loadPagefind();
+    }
+
+    function close() {
+      overlay.classList.remove('is-visible');
+      document.body.classList.remove('search-open');
+      openBtn.focus();
+    }
+
+    openBtn.addEventListener('click', open);
+    closeBtn.addEventListener('click', close);
+
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) close();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      var isOpen = overlay.classList.contains('is-visible');
+      if (e.key === 'Escape' && isOpen) close();
+      var typing = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA';
+      if (e.key === '/' && !typing && !isOpen) {
+        e.preventDefault();
+        open();
+      }
+    });
+
+    var debounceTimer;
+    input.addEventListener('input', function () {
+      clearTimeout(debounceTimer);
+      var term = input.value.trim();
+      debounceTimer = setTimeout(function () {
+        runSearch(term);
+      }, 150);
+    });
+
+    function runSearch(term) {
+      if (!term) {
+        results.innerHTML = '';
+        return;
+      }
+
+      loadPagefind().then(function () {
+        if (loadError) {
+          results.innerHTML =
+            '<p class="search-results__empty">La búsqueda está disponible en la versión publicada del sitio (necesita <code>npm run build</code>).</p>';
+          return;
+        }
+
+        pagefind.search(term).then(function (search) {
+          return Promise.all(search.results.slice(0, 8).map(function (r) {
+            return r.data();
+          }));
+        }).then(function (items) {
+          if (items.length === 0) {
+            results.innerHTML = '<p class="search-results__empty">Sin resultados para "' + term + '".</p>';
+            return;
+          }
+
+          results.innerHTML = items
+            .map(function (item) {
+              var title = (item.meta && item.meta.title) || item.url;
+              // Preferimos la meta-descripción curada de la página (limpia,
+              // una sola frase) al extracto en bruto de Pagefind, que puede
+              // concatenar texto de bloques distintos (fecha, autoría...)
+              // sin espacio entre medio.
+              var snippet = (item.meta && item.meta.description) || item.excerpt;
+              return (
+                '<a class="search-result" href="' + item.url + '">' +
+                '<span class="search-result__title">' + title + '</span>' +
+                '<span class="search-result__excerpt">' + snippet + '</span>' +
+                '</a>'
+              );
+            })
+            .join('');
+        });
+      });
+    }
+  })();
+</script>
+
+<style>
+  .search-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0.45rem 0.8rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-ink-soft);
+    font-size: 0.85rem;
+    transition:
+      border-color var(--duration-fast) var(--ease-out),
+      color var(--duration-fast) var(--ease-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .search-trigger:hover {
+      border-color: var(--color-brand);
+      color: var(--color-ink);
+    }
+  }
+
+  .search-trigger:active {
+    transform: scale(0.97);
+  }
+
+  @media (max-width: 767px) {
+    .search-trigger__label {
+      display: none;
+    }
+
+    .search-trigger {
+      padding: 0.5rem;
+    }
+  }
+
+  .search-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    justify-content: center;
+    padding: 10vh var(--space-4) var(--space-4);
+    background: rgba(33, 29, 26, 0.4);
+    backdrop-filter: blur(2px);
+  }
+
+  .search-overlay.is-visible {
+    display: flex;
+    animation: search-fade var(--duration-base) var(--ease-out);
+  }
+
+  @keyframes search-fade {
+    from {
+      opacity: 0;
+    }
+  }
+
+  .search-dialog {
+    width: 100%;
+    max-width: 560px;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    animation: search-rise var(--duration-base) var(--ease-out);
+  }
+
+  @keyframes search-rise {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.98);
+    }
+  }
+
+  .search-dialog__field {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-ink-faint);
+  }
+
+  .search-dialog__field input {
+    flex: 1;
+    border: 0;
+    outline: 0;
+    background: none;
+    font: inherit;
+    font-size: 1rem;
+    color: var(--color-ink);
+  }
+
+  .search-dialog__field button {
+    display: grid;
+    place-items: center;
+    padding: var(--space-1);
+    color: var(--color-ink-faint);
+    border-radius: var(--radius-sm);
+  }
+
+  .search-dialog__field button:hover {
+    color: var(--color-ink);
+  }
+
+  .search-results {
+    overflow-y: auto;
+    padding: var(--space-2);
+  }
+
+  .search-results__empty {
+    padding: var(--space-4);
+    text-align: center;
+    color: var(--color-ink-faint);
+    font-size: 0.9rem;
+  }
+
+  .search-result {
+    display: block;
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: inherit;
+    transition: background-color var(--duration-fast) var(--ease-out);
+  }
+
+  .search-result + .search-result {
+    margin-top: var(--space-1);
+    border-top: 1px solid var(--color-border);
+    padding-top: var(--space-3);
+  }
+
+  .search-result:hover,
+  .search-result:focus-visible {
+    background: var(--color-surface-sunken);
+  }
+
+  .search-result__title {
+    display: block;
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+
+  .search-result__excerpt {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    margin-top: 2px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: var(--color-ink-soft);
+  }
+
+  .search-result__excerpt :global(mark) {
+    background: var(--color-accent-tint);
+    color: var(--color-accent-dark);
+    border-radius: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .search-overlay,
+    .search-dialog {
+      animation: none;
+    }
+  }
+
+  :global(body.search-open) {
+    overflow: hidden;
+  }
+</style>

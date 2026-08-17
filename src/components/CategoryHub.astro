@@ -1,0 +1,322 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AdSlot from './AdSlot.astro';
+import Icon from './Icon.astro';
+import Breadcrumbs from './Breadcrumbs.astro';
+import ProductCard from './ProductCard.astro';
+import CoverArt from './CoverArt.astro';
+import {
+  SITE,
+  ANIMALS,
+  getCategory,
+  getType,
+  getTopicImage,
+  getTopicImageAlt,
+  type CategorizedAnimal
+} from '../site.config';
+
+interface Props {
+  animal: CategorizedAnimal;
+  categoria: string;
+}
+
+const { animal, categoria } = Astro.props;
+const animalInfo = ANIMALS.find((a) => a.slug === animal)!;
+const categoryInfo = getCategory(animal, categoria);
+const types = categoryInfo.types.filter((t) => t.built);
+
+const products = await getCollection(
+  'productos',
+  (entry) => entry.data.animal === animal && entry.data.categoria === categoria
+);
+const countByTipo = new Map<string, number>();
+for (const p of products) {
+  if (p.data.tipo) countByTipo.set(p.data.tipo, (countByTipo.get(p.data.tipo) ?? 0) + 1);
+}
+
+// Destacados: los mejor valorados de TODA la categoría, cruzando los
+// distintos tipos — da una vista rápida de lo mejor sin tener que entrar
+// tipo por tipo. Máximo 4, para no duplicar el grid completo de cada tipo.
+const featured = [...products].sort((a, b) => b.data.rating - a.data.rating).slice(0, 4);
+
+const title = `${categoryInfo.label} para ${animalInfo.label.toLowerCase()}`;
+
+// La descripción corta de la categoría (categoryInfo.description) está
+// pensada para la tarjeta de AnimalHub, no como meta description propia —
+// usada tal cual aquí se quedaba por debajo de los ~50 caracteres mínimos
+// recomendados para un snippet de SERP útil. Se amplía con una frase fija
+// que reutiliza datos reales ya existentes (animal, categoría), sin
+// inventar nada nuevo.
+const metaDescription = `${categoryInfo.description} Guías y comparativas de ${categoryInfo.label.toLowerCase()} para ${animalInfo.label.toLowerCase()}.`;
+
+// La portada de la categoría toma la foto de su primer tipo construido
+// (cada tipo tiene la suya, distinta) en vez de la genérica del animal —
+// así "Alimentación", "Paseo", "Juguetes" y "Descanso" dentro de Perros
+// nunca comparten la misma imagen entre sí.
+const headerImage = getTopicImage(animal, categoria, types[0]?.slug);
+const headerImageAlt = getTopicImageAlt(animal, categoria, types[0]?.slug);
+
+// CollectionPage + ItemList: identifica esta página como un listado de
+// tipos (no un artículo), con enlace directo a cada uno — mismos datos que
+// ya se muestran en la rejilla, sin inventar nada nuevo.
+const pageUrl = new URL(`/${animal}/${categoria}/`, SITE.url).toString();
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: title,
+  description: metaDescription,
+  url: pageUrl,
+  ...(types.length > 0
+    ? {
+        mainEntity: {
+          '@type': 'ItemList',
+          itemListElement: types.map((t, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            url: new URL(`/${animal}/${categoria}/${t.slug}/`, SITE.url).toString(),
+            name: t.label
+          }))
+        }
+      }
+    : {})
+};
+---
+
+<BaseLayout title={title} description={metaDescription}>
+  <div class="wrap">
+    <Breadcrumbs
+      items={[
+        { label: 'Inicio', href: '/' },
+        { label: animalInfo.label, href: `/${animal}/` },
+        { label: categoryInfo.label }
+      ]}
+    />
+
+    <header class="cat-head" data-reveal>
+      <CoverArt
+        seccion={categoria}
+        icon={categoryInfo.icon}
+        alt={headerImageAlt ?? `Foto de ${title.toLowerCase()}`}
+        ratio="banner"
+        imageUrl={headerImage}
+      />
+      <h1>{title}</h1>
+      <p>{categoryInfo.description}</p>
+    </header>
+
+    <AdSlot variant="leaderboard" />
+
+    {
+      types.length > 0 ? (
+        <section aria-label={`Tipos dentro de ${categoryInfo.label.toLowerCase()}`}>
+          <h2 class="section-title" data-reveal>
+            ¿Qué tipo buscas?
+          </h2>
+          <div class="types-grid">
+            {types.map((t, i) => (
+              <a
+                class="type-card"
+                href={`/${animal}/${categoria}/${t.slug}/`}
+                data-reveal
+                style={`--reveal-delay:${i * 70}ms`}
+              >
+                <CoverArt
+                  seccion={t.slug}
+                  icon={t.icon}
+                  alt={getTopicImageAlt(animal, categoria, t.slug) ?? `Foto de ${t.label.toLowerCase()}`}
+                  ratio="card"
+                  rounded="top"
+                  imageUrl={getTopicImage(animal, categoria, t.slug)}
+                />
+                <div class="type-card__body">
+                  <span class="type-card__label">{t.label}</span>
+                  <span class="type-card__desc">{t.description}</span>
+                  <span class="type-card__count">
+                    {countByTipo.get(t.slug) ?? 0}{' '}
+                    {(countByTipo.get(t.slug) ?? 0) === 1 ? 'producto analizado' : 'productos analizados'}
+                  </span>
+                  <span class="type-card__arrow">
+                    <Icon name="chevronRight" size={18} />
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+      ) : (
+        <p class="empty">Todavía no hay contenido publicado en esta categoría.</p>
+      )
+    }
+
+    {
+      categoryInfo.intro && (
+        <section class="cat-intro prose" aria-label={`Cómo elegir dentro de ${categoryInfo.label.toLowerCase()}`} data-reveal>
+          <h2>Cómo elegir</h2>
+          <p>{categoryInfo.intro}</p>
+        </section>
+      )
+    }
+
+    {
+      featured.length > 1 && (
+        <section class="featured" aria-label="Destacados de la categoría">
+          <h2 class="section-title" data-reveal>
+            Destacados en {categoryInfo.label.toLowerCase()}
+          </h2>
+          <div class="featured__grid" data-product-grid>
+            {featured.map((p, i) => (
+              <ProductCard
+                href={`/${animal}/${categoria}/${p.data.tipo}/${p.id}/`}
+                title={p.data.title}
+                description={p.data.description}
+                rating={p.data.rating}
+                bestFor={p.data.bestFor}
+                revealDelay={i * 60}
+                topPick={i === 0}
+                seccion={p.data.tipo!}
+                icon={getType(animal, categoria, p.data.tipo!).icon}
+                imageUrl={p.data.imageUrl}
+                marca={p.data.marca}
+                variante={p.data.variante}
+                tamanos={p.data.tamanos}
+                necesidades={p.data.necesidades}
+              />
+            ))}
+          </div>
+        </section>
+      )
+    }
+  </div>
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+</BaseLayout>
+
+<style>
+  .cat-head {
+    margin-top: var(--space-3);
+    margin-bottom: var(--space-6);
+  }
+
+  .cat-head h1 {
+    margin-top: var(--space-5);
+    font-size: clamp(1.6rem, 1.3rem + 1.1vw, 2.1rem);
+  }
+
+  .cat-head p {
+    margin-top: var(--space-1);
+    color: var(--color-ink-soft);
+    max-width: 60ch;
+  }
+
+  .section-title {
+    margin-top: var(--space-7);
+    font-size: 1.25rem;
+  }
+
+  .types-grid {
+    margin-top: var(--space-5);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--space-4);
+  }
+
+  .cat-intro {
+    margin-top: var(--space-8);
+    padding-top: var(--space-6);
+    padding-bottom: 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .cat-intro h2 {
+    margin-top: 0;
+  }
+
+  .featured {
+    margin-top: var(--space-8);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .featured__grid {
+    margin-top: var(--space-5);
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+
+  .type-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    color: var(--color-ink);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition:
+      transform var(--duration-base) var(--ease-out),
+      box-shadow var(--duration-base) var(--ease-out),
+      border-color var(--duration-base) var(--ease-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .type-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--color-brand);
+    }
+
+    .type-card:hover .type-card__arrow {
+      transform: translateX(3px);
+    }
+  }
+
+  .type-card:active {
+    transform: translateY(-1px) scale(0.99);
+  }
+
+  .type-card__body {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding: var(--space-5);
+  }
+
+  .type-card__label {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .type-card__desc {
+    color: var(--color-ink-soft);
+    font-size: 0.87rem;
+  }
+
+  .type-card__count {
+    margin-top: var(--space-2);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--color-border);
+    width: 100%;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-accent-dark);
+  }
+
+  .type-card__arrow {
+    position: absolute;
+    top: var(--space-5);
+    right: var(--space-5);
+    color: var(--color-ink-faint);
+    transition: transform var(--duration-base) var(--ease-out);
+  }
+
+  .empty {
+    margin-top: var(--space-6);
+    color: var(--color-ink-soft);
+  }
+</style>

@@ -1,0 +1,76 @@
+---
+import Icon from './Icon.astro';
+---
+
+<button
+  type="button"
+  id="back-to-top"
+  class="back-to-top"
+  aria-label="Volver arriba"
+>
+  <Icon name="arrowUp" size={20} />
+</button>
+
+<script>
+  const button = document.getElementById('back-to-top');
+
+  if (button) {
+    const toggle = () => {
+      button.classList.toggle('is-visible', window.scrollY > 640);
+    };
+
+    toggle();
+    window.addEventListener('scroll', toggle, { passive: true });
+
+    button.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+</script>
+
+<style>
+  .back-to-top {
+    position: fixed;
+    right: var(--space-5);
+    bottom: var(--space-5);
+    z-index: 40;
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: var(--color-brand);
+    color: #fff;
+    box-shadow: var(--shadow-md);
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+    pointer-events: none;
+    transition:
+      opacity var(--duration-base) var(--ease-out),
+      transform var(--duration-base) var(--ease-out),
+      background-color var(--duration-fast) var(--ease-out);
+  }
+
+  .back-to-top.is-visible {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .back-to-top:hover {
+      background: var(--color-brand-dark);
+    }
+  }
+
+  .back-to-top:active {
+    transform: scale(0.94);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .back-to-top {
+      transition: opacity var(--duration-base) ease;
+      transform: none;
+    }
+  }
+</style>

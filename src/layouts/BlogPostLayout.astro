@@ -1,0 +1,136 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import AffiliateDisclosure from '../components/AffiliateDisclosure.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import BackToTop from '../components/BackToTop.astro';
+import Byline from '../components/Byline.astro';
+import FaqSection from '../components/FaqSection.astro';
+import AdSlot from '../components/AdSlot.astro';
+import CoverArt from '../components/CoverArt.astro';
+import { SITE, inferBlogCover } from '../site.config';
+
+interface Faq {
+  question: string;
+  answer: string;
+}
+
+interface Props {
+  title: string;
+  description: string;
+  pubDate: Date;
+  updatedDate?: Date;
+  faqs?: Faq[];
+}
+
+const { title, description, pubDate, updatedDate, faqs } = Astro.props;
+const cover = inferBlogCover(title);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: title,
+  description,
+  ...(cover.imageUrl ? { image: cover.imageUrl } : {}),
+  datePublished: pubDate.toISOString(),
+  dateModified: (updatedDate ?? pubDate).toISOString(),
+  author: { '@type': 'Organization', name: SITE.name },
+  publisher: { '@type': 'Organization', name: SITE.name }
+};
+
+const faqJsonLd =
+  faqs && faqs.length > 0
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: faqs.map((f) => ({
+          '@type': 'Question',
+          name: f.question,
+          acceptedAnswer: { '@type': 'Answer', text: f.answer }
+        }))
+      }
+    : null;
+---
+
+<BaseLayout title={title} description={description}>
+  <div class="wrap">
+    <Breadcrumbs items={[{ label: 'Inicio', href: '/' }, { label: 'Blog', href: '/blog/' }, { label: title }]} />
+
+    <article class="post">
+      {
+        cover.imageUrl && (
+          <CoverArt
+            seccion={cover.seccion}
+            icon={cover.icon}
+            alt={cover.alt ?? title}
+            ratio="banner"
+            imageUrl={cover.imageUrl}
+          />
+        )
+      }
+      <p class="post__eyebrow">Blog</p>
+      <h1 data-reveal>{title}</h1>
+      <p class="post__meta">
+        Publicado el{' '}
+        {pubDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+        {
+          updatedDate && (
+            <>
+              {' '}
+              · Actualizado el{' '}
+              {updatedDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </>
+          )
+        }
+      </p>
+      <Byline />
+
+      <AffiliateDisclosure compact />
+
+      <div class="prose post__body">
+        <slot />
+      </div>
+
+      <AdSlot variant="in-article" belowFold />
+
+      {faqs && faqs.length > 0 && <FaqSection faqs={faqs} />}
+    </article>
+  </div>
+
+  <BackToTop />
+
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  {faqJsonLd && <script is:inline type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />}
+</BaseLayout>
+
+<style>
+  .post {
+    max-width: 72ch;
+    margin: 0 auto;
+    padding-top: var(--space-3);
+  }
+
+  .post__eyebrow {
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--color-brand-dark);
+  }
+
+  .post h1 {
+    margin-top: var(--space-2);
+    font-size: clamp(1.9rem, 1.5rem + 1.8vw, 2.6rem);
+  }
+
+  .post__meta {
+    margin-top: var(--space-2);
+    color: var(--color-ink-faint);
+    font-size: 0.85rem;
+  }
+
+  .post__body {
+    max-width: none;
+    padding-block: 0;
+    margin-top: var(--space-6);
+  }
+</style>
