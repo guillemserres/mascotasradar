@@ -25,7 +25,7 @@ import { NAV, SITE } from '../site.config';
       <nav class="not-found__nav" aria-label="Categorías">
         <ul>
           {
-            NAV.filter((item) => item.href !== '/sobre-nosotros/').map((item) => (
+            NAV.map((item) => (
               <li>
                 <a href={item.href}>{item.label}</a>
               </li>

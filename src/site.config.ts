@@ -1778,6 +1778,5 @@ export const NAV = [
   { label: 'Gatos', href: '/gatos/' },
   { label: 'Acuarios', href: '/acuarios/' },
   { label: 'Otras mascotas', href: '/otras-mascotas/' },
-  { label: 'Blog', href: '/blog/' },
-  { label: 'Sobre nosotros', href: '/sobre-nosotros/' }
+  { label: 'Blog', href: '/blog/' }
 ];
