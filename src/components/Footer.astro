@@ -33,11 +33,6 @@ const links = [
             </li>
           ))
         }
-        <li>
-          <button type="button" data-cookie-reopen class="footer__cookie-btn">
-            Preferencias de cookies
-          </button>
-        </li>
       </ul>
     </nav>
 
@@ -107,28 +102,6 @@ const links = [
   @media (hover: hover) and (pointer: fine) {
     .footer__nav a:hover {
       color: var(--color-brand-dark);
-    }
-  }
-
-  .footer__cookie-btn {
-    display: inline-block;
-    padding-block: 0.35rem;
-    margin-block: -0.35rem;
-    font: inherit;
-    font-size: 0.85rem;
-    color: var(--color-ink-soft);
-    text-decoration: underline;
-    text-decoration-color: transparent;
-    text-underline-offset: 3px;
-    transition:
-      color var(--duration-fast) var(--ease-out),
-      text-decoration-color var(--duration-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) and (pointer: fine) {
-    .footer__cookie-btn:hover {
-      color: var(--color-brand-dark);
-      text-decoration-color: currentColor;
     }
   }
 

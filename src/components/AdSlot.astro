@@ -46,19 +46,26 @@ const isConfigured = ADSENSE.clientId !== '[ADSENSE_ID]' && slotId !== '[AD_SLOT
 >
   {
     isConfigured ? (
-      // Sin push aquí: el <ins> se deja "crudo" y es CookieConsent.astro
-      // quien lo activa (createElement del script + adsbygoogle.push), y
-      // solo si hay consentimiento de publicidad. Empujar el anuncio en
-      // este script cargaría/mostraría publicidad antes de que el usuario
-      // decida, incumpliendo el consentimiento que el banner promete pedir.
-      <ins
-        class="adsbygoogle"
-        style="display:block;width:100%;height:100%"
-        data-ad-client={ADSENSE.clientId}
-        data-ad-slot={slotId}
-        data-ad-format="auto"
-        data-full-width-responsive="true"
-      />
+      // Bloque de anuncio manual — coexiste con los Anuncios automáticos
+      // que Google ya gestiona por su cuenta (esos se insertan y activan
+      // solos, sin tocar este componente). El push va junto a este <ins>
+      // concreto, no en un script global: así nunca compite por el mismo
+      // elemento con lo que Auto Ads inserte en la página. El
+      // consentimiento lo gestiona el propio mensaje de AdSense (Privacidad
+      // y mensajes → Reglamentos europeos), no un banner propio del sitio.
+      <>
+        <ins
+          class="adsbygoogle"
+          style="display:block;width:100%;height:100%"
+          data-ad-client={ADSENSE.clientId}
+          data-ad-slot={slotId}
+          data-ad-format="auto"
+          data-full-width-responsive="true"
+        />
+        <script is:inline>
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+      </>
     ) : (
       <span class="ad-slot__label">Publicidad</span>
     )

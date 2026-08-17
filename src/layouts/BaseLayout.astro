@@ -2,8 +2,9 @@
 import '../styles/global.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import CookieConsent from '../components/CookieConsent.astro';
 import { SITE, ADSENSE } from '../site.config';
+
+const adsenseConfigured = ADSENSE.clientId !== '[ADSENSE_ID]';
 
 interface Props {
   title: string;
@@ -60,11 +61,25 @@ const siteJsonLd = [
     <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
     <link rel="dns-prefetch" href="https://images.unsplash.com" />
     {
-      ADSENSE.clientId !== '[ADSENSE_ID]' && (
-        // Solo verifica la propiedad del sitio ante Google — no carga ningún
-        // script ni toca cookies. El script real de AdSense sigue viviendo
-        // en CookieConsent.astro, gateado por consentimiento de publicidad.
-        <meta name="google-adsense-account" content={ADSENSE.clientId} />
+      adsenseConfigured && (
+        <>
+          <meta name="google-adsense-account" content={ADSENSE.clientId} />
+          {
+            // El script de AdSense carga en todas las visitas (Google lo
+            // exige así: es el mismo script que muestra su mensaje de
+            // consentimiento — Privacidad y mensajes → Reglamentos europeos
+            // en la cuenta de AdSense — a visitantes del EEE/Reino
+            // Unido/Suiza antes de servir nada). Google decide internamente
+            // qué anuncios pedir según ese consentimiento; este sitio ya no
+            // gestiona un banner de cookies propio para publicidad.
+          }
+          <script
+            is:inline
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE.clientId}`}
+            crossorigin="anonymous"
+          />
+        </>
       )
     }
     <title>{pageTitle}</title>
@@ -95,7 +110,6 @@ const siteJsonLd = [
       <slot />
     </main>
     <Footer />
-    <CookieConsent />
   </body>
 </html>
 
