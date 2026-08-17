@@ -22,10 +22,7 @@ export const AMAZON = {
 };
 
 export const ADSENSE = {
-  // TODO: sustituye por tu ID real de Google AdSense (ej. "ca-pub-1234567890123456")
-  // cuando tengas la cuenta aprobada. Hasta entonces AdSlot.astro no carga
-  // ningún script real, solo reserva el espacio visualmente.
-  clientId: '[ADSENSE_ID]'
+  clientId: 'ca-pub-5934388233296084'
 };
 
 // Fotos reales de temática (no de producto) para portadas de nivel

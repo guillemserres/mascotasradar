@@ -3,7 +3,7 @@ import '../styles/global.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import CookieConsent from '../components/CookieConsent.astro';
-import { SITE } from '../site.config';
+import { SITE, ADSENSE } from '../site.config';
 
 interface Props {
   title: string;
@@ -59,6 +59,14 @@ const siteJsonLd = [
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
     <link rel="dns-prefetch" href="https://images.unsplash.com" />
+    {
+      ADSENSE.clientId !== '[ADSENSE_ID]' && (
+        // Solo verifica la propiedad del sitio ante Google — no carga ningún
+        // script ni toca cookies. El script real de AdSense sigue viviendo
+        // en CookieConsent.astro, gateado por consentimiento de publicidad.
+        <meta name="google-adsense-account" content={ADSENSE.clientId} />
+      )
+    }
     <title>{pageTitle}</title>
     <meta name="description" content={description} data-pagefind-meta="description[content]" />
     {noindex && <meta name="robots" content="noindex, nofollow" />}
