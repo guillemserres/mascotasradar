@@ -34,7 +34,7 @@ const { basePath, products } = Astro.props;
             {products.map((p, i) => (
               <tr class:list={{ 'comparison__top-row': i === 0 }}>
                 <th scope="row">
-                  <a href={`${basePath}${p.id}/`}>{p.data.title}</a>
+                  <a href={`${basePath}${p.id}/`}>{p.data.title}</a>{' '}
                   {i === 0 && <span class="comparison__badge">Mejor valorado</span>}
                 </th>
                 <td>
@@ -130,6 +130,7 @@ const { basePath, products } = Astro.props;
   .comparison__badge {
     display: inline-block;
     margin-top: 4px;
+    margin-left: 0.4rem;
     padding: 0.15rem 0.55rem;
     border-radius: var(--radius-pill);
     background: var(--color-brand);
