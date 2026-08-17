@@ -234,9 +234,13 @@ const sizes =
     object-fit: cover;
   }
 
-  /* Foto de producto real (futuro, vía Amazon): se ve entera, sin
-     recortar, con borde y margen — recortar un producto sería engañoso. */
+  /* Foto de producto real (vía Amazon): se ve entera, sin recortar —
+     recortar un producto sería engañoso. Las fotos de producto de Amazon
+     llevan fondo blanco por norma; el marco tiene que ser del mismo
+     blanco (--color-surface, no el beige de --color-surface-sunken) para
+     que no se note la costura entre la foto y la tarjeta. */
   .cover--fit-contain {
+    background: var(--color-surface);
     border: 1px solid var(--color-border);
   }
 
