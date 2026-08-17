@@ -231,7 +231,26 @@ export const TOPIC_IMAGE_ALT: Record<string, string> = {
   'blog/conejo-pipi-fuera-del-arenero': 'Conejo sentado en la hierba comiendo',
   'blog/cobaya-chilla-al-verme': 'Cobaya blanca y marrón sobre una mesa de madera',
   'blog/hamster-primeros-dias-en-casa': 'Hámster dentro de su jaula',
-  'blog/rueda-ejercicio-hamster-por-que-imprescindible': 'Hámster junto a una piña dentro de su hábitat'
+  'blog/rueda-ejercicio-hamster-por-que-imprescindible': 'Hámster junto a una piña dentro de su hábitat',
+  'blog/agua-verde-acuario-algas': 'Planta acuática verde dentro de un acuario de cristal',
+  'blog/cada-cuanto-cambiar-agua-acuario': 'Niña pequeña tocando el cristal de un acuario',
+  'blog/ciclado-acuario-guia-paso-a-paso': 'Pez naranja y blanco nadando en un acuario',
+  'blog/cuantos-peces-caben-en-mi-acuario': 'Grupo de peces payaso nadando en un acuario',
+  'blog/cuarentena-peces-nuevos-por-que': 'Primer plano de peces rojos en el agua',
+  'blog/filtro-acuario-encendido-24-horas': 'Pez rayado azul y naranja nadando',
+  'blog/peces-boqueando-en-superficie': 'Pez blanco y dorado nadando cerca de la superficie',
+  'blog/primer-acuario-errores-principiante': 'Banco de peces de colores en una pecera',
+  'blog/se-va-la-luz-calentador-acuario': 'Peces azules y grises nadando junto a corales',
+  'blog/ansiedad-separacion-perros-senales': 'Perro pequeño de pelo rizado marrón',
+  'blog/arnes-o-collar-cual-elegir': 'Golden retriever con arnés amarillo y negro',
+  'blog/cama-ortopedica-cuando-necesita-tu-perro': 'Pastor alemán tumbado en una cama gris para mascotas',
+  'blog/cuanto-debe-dormir-un-perro': 'Perro tumbado y dormido en su cama',
+  'blog/perro-da-vueltas-antes-de-tumbarse': 'Perro acostado en su cama',
+  'blog/perro-destroza-juguetes-en-minutos': 'Cachorro de beagle mordiendo un juguete de hueso',
+  'blog/cuantas-veces-al-dia-debe-comer-un-gato': 'Gato naranja comiendo pienso de un plato blanco',
+  'blog/cuantos-areneros-necesitas-varios-gatos': 'Gatito atigrado naranja junto a un recipiente de plástico rosa',
+  'blog/gato-no-usa-arenero-soluciones': 'Gato sentado junto a una ventana',
+  'blog/gato-rasca-sofa-no-rascador': 'Gato siamés rascando la pata de una silla'
 };
 
 export const TOPIC_IMAGES: Record<string, string> = {
@@ -384,7 +403,26 @@ export const TOPIC_IMAGES: Record<string, string> = {
   'blog/conejo-pipi-fuera-del-arenero': img('1725206076101-e83d6c93abaf'),
   'blog/cobaya-chilla-al-verme': img('1618252903592-2b8c90c43a6e'),
   'blog/hamster-primeros-dias-en-casa': img('1657076761228-bdb21cf0bc7c'),
-  'blog/rueda-ejercicio-hamster-por-que-imprescindible': img('1676918555382-fcd06a483e25')
+  'blog/rueda-ejercicio-hamster-por-que-imprescindible': img('1676918555382-fcd06a483e25'),
+  'blog/agua-verde-acuario-algas': img('1579967327980-2a4117da0e4a'),
+  'blog/cada-cuanto-cambiar-agua-acuario': img('1489015712802-f490a7a1061d'),
+  'blog/ciclado-acuario-guia-paso-a-paso': img('1606137029647-71daa7c9c5c8'),
+  'blog/cuantos-peces-caben-en-mi-acuario': img('1706114350113-3063f27619c7'),
+  'blog/cuarentena-peces-nuevos-por-que': img('1524704654690-b56c05c78a00'),
+  'blog/filtro-acuario-encendido-24-horas': img('1524704796725-9fc3044a58b2'),
+  'blog/peces-boqueando-en-superficie': img('1522069169874-c58ec4b76be5'),
+  'blog/primer-acuario-errores-principiante': img('1436891461396-6df41158de09'),
+  'blog/se-va-la-luz-calentador-acuario': img('1514907283155-ea5f4094c70c'),
+  'blog/ansiedad-separacion-perros-senales': img('1605459082189-dc171c418f08'),
+  'blog/arnes-o-collar-cual-elegir': img('1581597359121-0f69057e2fb1'),
+  'blog/cama-ortopedica-cuando-necesita-tu-perro': img('1598397678815-c5dc869035b8'),
+  'blog/cuanto-debe-dormir-un-perro': img('1551928692-6954104dee5a'),
+  'blog/perro-da-vueltas-antes-de-tumbarse': img('1534521152192-2e2cb02c6ea1'),
+  'blog/perro-destroza-juguetes-en-minutos': img('1715033749994-55f16a83c236'),
+  'blog/cuantas-veces-al-dia-debe-comer-un-gato': img('1774797405267-7c452cb85652'),
+  'blog/cuantos-areneros-necesitas-varios-gatos': img('1576431031309-fa20d16aa4ba'),
+  'blog/gato-no-usa-arenero-soluciones': img('1711856591920-d70831cc5464'),
+  'blog/gato-rasca-sofa-no-rascador': img('1759165440303-40ef25cc6053')
 };
 
 // Fotos EXCLUSIVAS para las tarjetas de categoría/sección de AnimalHub (el
@@ -496,6 +534,28 @@ export function inferBlogCover(title: string): { seccion: string; icon: IconName
   // arenero" caería en el patrón genérico /arenero/ de gatos antes de
   // llegar a /conejo/, dando la portada del animal equivocado.
   const specific: [RegExp, string, string, IconName][] = [
+    // Portada propia por artículo — necesarios para que estos 19 posts no
+    // acaben compartiendo la misma foto que su tipo/categoría emparentado
+    // (o entre ellos), comprobados antes que cualquier patrón genérico.
+    [/agua.*se pone verde|algas en suspensi[oó]n/, 'acuarios', 'blog/agua-verde-acuario-algas', 'droplet'],
+    [/cada cu[aá]nto hay que cambiar el agua/, 'acuarios', 'blog/cada-cuanto-cambiar-agua-acuario', 'droplet'],
+    [/ciclado de un acuario/, 'acuarios', 'blog/ciclado-acuario-guia-paso-a-paso', 'fish'],
+    [/cu[aá]ntos peces caben/, 'acuarios', 'blog/cuantos-peces-caben-en-mi-acuario', 'fish'],
+    [/cuarentena de peces/, 'acuarios', 'blog/cuarentena-peces-nuevos-por-que', 'fish'],
+    [/filtro del acuario encendido/, 'acuarios', 'blog/filtro-acuario-encendido-24-horas', 'filter'],
+    [/boqueando en la superficie/, 'acuarios', 'blog/peces-boqueando-en-superficie', 'fish'],
+    [/primer acuario: los errores/, 'acuarios', 'blog/primer-acuario-errores-principiante', 'fish'],
+    [/se va la luz.*calentador/, 'acuarios', 'blog/se-va-la-luz-calentador-acuario', 'thermometer'],
+    [/ansiedad por separaci[oó]n/, 'perros', 'blog/ansiedad-separacion-perros-senales', 'paw'],
+    [/arn[eé]s o collar/, 'perros', 'blog/arnes-o-collar-cual-elegir', 'harness'],
+    [/cama ortop[eé]dica/, 'perros', 'blog/cama-ortopedica-cuando-necesita-tu-perro', 'bed'],
+    [/cu[aá]nto debe dormir un perro/, 'perros', 'blog/cuanto-debe-dormir-un-perro', 'bed'],
+    [/da vueltas antes de tumbarse/, 'perros', 'blog/perro-da-vueltas-antes-de-tumbarse', 'bed'],
+    [/destroza los? juguetes/, 'perros', 'blog/perro-destroza-juguetes-en-minutos', 'toy'],
+    [/cu[aá]ntas veces al d[ií]a debe comer un gato/, 'gatos', 'blog/cuantas-veces-al-dia-debe-comer-un-gato', 'bowl'],
+    [/cu[aá]ntos areneros necesitas/, 'gatos', 'blog/cuantos-areneros-necesitas-varios-gatos', 'litterbox'],
+    [/no usa el arenero/, 'gatos', 'blog/gato-no-usa-arenero-soluciones', 'litterbox'],
+    [/rasca el sof[aá]/, 'gatos', 'blog/gato-rasca-sofa-no-rascador', 'cat'],
     // Portada propia por artículo, comprobado antes que los patrones
     // genéricos de conejo/hámster de abajo (si no, el genérico intercepta
     // primero por contener la misma palabra).
