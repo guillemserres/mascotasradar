@@ -4,11 +4,22 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import Icon from '../../components/Icon.astro';
 import CoverArt from '../../components/CoverArt.astro';
-import { inferBlogCover } from '../../site.config';
+import { inferBlogCover, ANIMALS } from '../../site.config';
 
 const posts = (await getCollection('blog')).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
 );
+
+// Cada post ya se clasifica por animal a través de inferBlogCover (misma
+// función que decide su portada) — se reutiliza aquí en vez de añadir un
+// campo nuevo al frontmatter de los 35 artículos existentes. Solo se
+// muestra un filtro por animal que de verdad tenga artículos.
+const postsWithCover = posts.map((post) => ({ post, cover: inferBlogCover(post.data.title) }));
+const seccionesEnUso = [...new Set(postsWithCover.map((p) => p.cover.seccion))];
+const filtros = ANIMALS.filter((a) => seccionesEnUso.includes(a.slug)).map((a) => ({
+  seccion: a.slug,
+  label: a.label
+}));
 ---
 
 <BaseLayout
@@ -23,40 +34,78 @@ const posts = (await getCollection('blog')).sort(
       <p>Cuidados, comportamiento y checklists prácticos — no solo qué comprar, sino por qué.</p>
     </header>
 
-    <ul class="post-list">
+    {
+      filtros.length > 1 && (
+        <div class="blog-filters" data-reveal>
+          <button type="button" class="blog-filters__pill is-active" data-filter-seccion="">
+            Todos
+          </button>
+          {filtros.map((f) => (
+            <button type="button" class="blog-filters__pill" data-filter-seccion={f.seccion}>
+              {f.label}
+            </button>
+          ))}
+        </div>
+      )
+    }
+
+    <ul class="post-list" data-post-list>
       {
-        posts.map((post, i) => {
-          const cover = inferBlogCover(post.data.title);
-          return (
-            <li>
-              <a class="post-card" href={`/blog/${post.id}/`} data-reveal style={`--reveal-delay:${i * 60}ms`}>
-                <CoverArt
-                  seccion={cover.seccion}
-                  icon={cover.icon}
-                  alt={cover.alt ?? post.data.title}
-                  ratio="card"
-                  rounded="top"
-                  seed={post.id}
-                  imageUrl={cover.imageUrl}
-                />
-                <div class="post-card__body">
-                  <h2>{post.data.title}</h2>
-                  <p>{post.data.description}</p>
-                  <span class="post-card__read">
-                    Leer artículo
-                    <Icon name="chevronRight" size={14} />
-                  </span>
-                </div>
-              </a>
-            </li>
-          );
-        })
+        postsWithCover.map(({ post, cover }, i) => (
+          <li data-seccion={cover.seccion}>
+            <a class="post-card" href={`/blog/${post.id}/`} data-reveal style={`--reveal-delay:${i * 60}ms`}>
+              <CoverArt
+                seccion={cover.seccion}
+                icon={cover.icon}
+                alt={cover.alt ?? post.data.title}
+                ratio="card"
+                rounded="top"
+                seed={post.id}
+                imageUrl={cover.imageUrl}
+              />
+              <div class="post-card__body">
+                <h2>{post.data.title}</h2>
+                <p>{post.data.description}</p>
+                <span class="post-card__read">
+                  Leer artículo
+                  <Icon name="chevronRight" size={14} />
+                </span>
+              </div>
+            </a>
+          </li>
+        ))
       }
     </ul>
+
+    <p class="empty" data-filter-empty hidden>
+      Ningún artículo de esta categoría todavía.
+    </p>
 
     {posts.length === 0 && <p class="empty">Todavía no hay artículos publicados.</p>}
   </div>
 </BaseLayout>
+
+<script>
+  const pills = document.querySelectorAll<HTMLButtonElement>('[data-filter-seccion]');
+  const items = document.querySelectorAll<HTMLLIElement>('[data-post-list] > li');
+  const emptyMsg = document.querySelector<HTMLElement>('[data-filter-empty]');
+
+  pills.forEach((pill) => {
+    pill.addEventListener('click', () => {
+      pills.forEach((p) => p.classList.remove('is-active'));
+      pill.classList.add('is-active');
+
+      const seccion = pill.dataset.filterSeccion;
+      let visibleCount = 0;
+      items.forEach((item) => {
+        const matches = !seccion || item.dataset.seccion === seccion;
+        item.hidden = !matches;
+        if (matches) visibleCount += 1;
+      });
+      if (emptyMsg) emptyMsg.hidden = visibleCount > 0;
+    });
+  });
+</script>
 
 <style>
   .blog-head {
@@ -72,6 +121,44 @@ const posts = (await getCollection('blog')).sort(
   .blog-head p {
     margin-top: var(--space-2);
     color: var(--color-ink-soft);
+  }
+
+  .blog-filters {
+    margin-bottom: var(--space-6);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .blog-filters__pill {
+    padding: 0.4rem 0.95rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border-strong);
+    background: var(--color-surface);
+    color: var(--color-ink-soft);
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition:
+      background-color var(--duration-fast) var(--ease-out),
+      border-color var(--duration-fast) var(--ease-out),
+      color var(--duration-fast) var(--ease-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .blog-filters__pill:hover {
+      border-color: var(--color-brand);
+      color: var(--color-ink);
+    }
+  }
+
+  .blog-filters__pill:active {
+    transform: scale(0.97);
+  }
+
+  .blog-filters__pill.is-active {
+    background: var(--color-brand);
+    border-color: var(--color-brand);
+    color: #fff;
   }
 
   .post-list {
