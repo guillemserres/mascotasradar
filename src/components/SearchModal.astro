@@ -144,7 +144,14 @@ import Icon from './Icon.astro';
   })();
 </script>
 
-<style>
+<style is:global>
+  /* is:global a propósito: los resultados de búsqueda (.search-result,
+     .search-result__title, .search-result__excerpt, .search-results__empty)
+     se generan en tiempo real desde el script de abajo via innerHTML — el
+     CSS "scoped" por defecto de Astro solo se aplica a marcado que existe
+     en el momento del build, así que esas reglas nunca alcanzaban al HTML
+     insertado dinámicamente (se veía sin ningún estilo: todo el texto
+     pegado sin separación). */
   .search-trigger {
     display: inline-flex;
     align-items: center;
@@ -304,7 +311,7 @@ import Icon from './Icon.astro';
     color: var(--color-ink-soft);
   }
 
-  .search-result__excerpt :global(mark) {
+  .search-result__excerpt mark {
     background: var(--color-accent-tint);
     color: var(--color-accent-dark);
     border-radius: 2px;
@@ -317,7 +324,7 @@ import Icon from './Icon.astro';
     }
   }
 
-  :global(body.search-open) {
+  body.search-open {
     overflow: hidden;
   }
 </style>
