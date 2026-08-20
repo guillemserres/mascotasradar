@@ -112,6 +112,13 @@ body {
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* Cifras de ancho fijo por defecto en todo el sitio — precios,
+     valoraciones, fechas y contadores de reseñas aparecen sueltos en
+     texto corrido y alineados en columna (tablas comparativas, tarjetas
+     de producto) constantemente; sin esto, dígitos de distinto ancho
+     (Inter no es monoespaciada) hacen que esas cifras no queden
+     alineadas entre sí ni se vean tan cuidadas. */
+  font-variant-numeric: tabular-nums;
 }
 
 img,
@@ -307,6 +314,18 @@ button {
 
 .prose p {
   color: var(--color-ink-soft);
+}
+
+/* Entradilla: el primer párrafo (cuando abre el artículo, no cuando
+   sigue directo a un encabezado) se distingue un poco del resto — más
+   grande, en el tono de texto principal en vez del secundario — para
+   invitar a seguir leyendo, como en una revista. Solo el primer hijo
+   real de .prose, no cualquier "primer párrafo de su tipo" repetido
+   tras cada H2. */
+.prose > p:first-child {
+  color: var(--color-ink);
+  font-size: 1.1rem;
+  line-height: 1.6;
 }
 
 .prose ul,
