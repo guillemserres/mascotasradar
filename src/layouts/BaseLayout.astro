@@ -11,9 +11,23 @@ interface Props {
   title: string;
   description?: string;
   noindex?: boolean;
+  // URL de la imagen de cabecera (banner) de la página, cuando la tiene —
+  // en casi todas las landings del sitio es el elemento LCP real. Pasarla
+  // aquí añade un <link rel="preload"> explícito en <head>, para que el
+  // navegador la descubra y empiece a descargarla antes incluso de llegar
+  // al <img> en el <body> (el mismo srcset/sizes que genera CoverArt para
+  // ratio="banner", para que el navegador elija el mismo recurso).
+  preloadImage?: string;
 }
 
-const { title, description = SITE.description, noindex = false } = Astro.props;
+const { title, description = SITE.description, noindex = false, preloadImage } = Astro.props;
+
+const isUnsplashPreload = preloadImage?.includes('images.unsplash.com') && /[?&]w=\d+/.test(preloadImage);
+const preloadSrcset = isUnsplashPreload
+  ? [320, 480, 640, 900, 1200]
+      .map((w) => `${preloadImage!.replace(/([?&])w=\d+/, `$1w=${w}`)} ${w}w`)
+      .join(', ')
+  : undefined;
 // Google trunca la etiqueta <title> en el buscador en torno a ~60-65
 // caracteres visibles. Si el título de la página ya es largo por sí solo
 // (habitual en guías y artículos con un título descriptivo completo),
@@ -62,6 +76,25 @@ const siteJsonLd = [
     <meta name="google-site-verification" content="rfCggSY62ALCdMrWce-1zxVFLxDrGBZmfalweOzjLJU" />
     <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
     <link rel="dns-prefetch" href="https://images.unsplash.com" />
+    {
+      // Las fotos de producto (fichas individuales) vienen de Amazon, no de
+      // Unsplash — mismo motivo que el preconnect de arriba: es el origen
+      // de la foto que casi siempre es el elemento LCP en esas páginas.
+    }
+    <link rel="preconnect" href="https://m.media-amazon.com" crossorigin />
+    <link rel="dns-prefetch" href="https://m.media-amazon.com" />
+    {
+      preloadImage && (
+        <link
+          rel="preload"
+          as="image"
+          href={preloadImage}
+          imagesrcset={preloadSrcset}
+          imagesizes={preloadSrcset ? '(max-width: 767px) 100vw, 720px' : undefined}
+          fetchpriority="high"
+        />
+      )
+    }
     {
       adsenseConfigured && (
         <>
