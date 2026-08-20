@@ -2,9 +2,10 @@
 import '../styles/global.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import { SITE, ADSENSE } from '../site.config';
+import { SITE, ADSENSE, ANALYTICS } from '../site.config';
 
 const adsenseConfigured = ADSENSE.clientId !== '[ADSENSE_ID]';
+const analyticsConfigured = ANALYTICS.ga4Id !== '[GA4_ID]';
 
 interface Props {
   title: string;
@@ -79,6 +80,25 @@ const siteJsonLd = [
             src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE.clientId}`}
             crossorigin="anonymous"
           />
+        </>
+      )
+    }
+    {
+      analyticsConfigured && (
+        <>
+          <script
+            is:inline
+            async
+            src={`https://www.googletagmanager.com/gtag/js?id=${ANALYTICS.ga4Id}`}
+          />
+          <script is:inline define:vars={{ gaId: ANALYTICS.ga4Id }}>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() {
+              dataLayer.push(arguments);
+            }
+            gtag('js', new Date());
+            gtag('config', gaId);
+          </script>
         </>
       )
     }

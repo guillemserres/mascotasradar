@@ -21,6 +21,10 @@ export const ADSENSE = {
   clientId: 'ca-pub-5934388233296084'
 };
 
+export const ANALYTICS = {
+  ga4Id: 'G-DYTR67FDYD'
+};
+
 // IDs de unidad de anuncio (Anuncios → Por unidad de anuncio en tu cuenta
 // de AdSense). Solo existen 3 posiciones distintas en toda la web
 // (<AdSlot> las usa por defecto según variant/belowFold, así que rellenar
