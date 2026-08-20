@@ -1,0 +1,52 @@
+---
+// Imagen ilustrativa dentro del cuerpo de una guía o artículo de blog —
+// distinta de CoverArt (portada de cabecera) y de las fotos de producto:
+// esta es una foto de ambiente/tema tomada de Unsplash, pensada para
+// romper bloques largos de texto y dar contexto visual real a media
+// lectura. Nunca se usa para simular una foto de producto concreto.
+interface Props {
+  src: string;
+  alt: string;
+  caption?: string;
+}
+
+const { src, alt, caption } = Astro.props;
+
+const isUnsplash = src.includes('images.unsplash.com') && /[?&]w=\d+/.test(src);
+const srcset = isUnsplash
+  ? [480, 720, 960, 1200].map((w) => `${src.replace(/([?&])w=\d+/, `$1w=${w}`)} ${w}w`).join(', ')
+  : undefined;
+---
+
+<figure class="article-image">
+  <img
+    src={src}
+    srcset={srcset}
+    sizes={srcset ? '(max-width: 767px) 100vw, 84ch' : undefined}
+    alt={alt}
+    loading="lazy"
+    decoding="async"
+  />
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .article-image {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .article-image img {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+  }
+
+  .article-image figcaption {
+    margin-top: var(--space-2);
+    padding-inline: 0;
+    font-size: 0.82rem;
+    color: var(--color-ink-faint);
+    text-align: center;
+  }
+</style>

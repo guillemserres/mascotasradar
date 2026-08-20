@@ -5,44 +5,89 @@ animal: "gatos"
 categoria: "alimentacion"
 tipo: "pienso"
 pubDate: 2026-08-15
+updatedDate: 2026-08-20
 faqs:
   - question: "¿Es verdad que los gatos necesitan más proteína que los perros?"
     answer: "Sí — los gatos son carnívoros estrictos (obligados), algo distinto a los perros, que son más omnívoros. Necesitan un porcentaje de proteína animal más alto en su dieta, y algunos nutrientes como la taurina solo los obtienen de fuentes animales."
   - question: "¿El pienso 'para esterilizados' es necesario tras la castración?"
     answer: "No es obligatorio, pero suele tener sentido: tras la esterilización el metabolismo del gato cambia y el riesgo de sobrepeso aumenta, así que una fórmula con menos calorías ajustada a ese cambio ayuda a prevenir el aumento de peso típico post-cirugía."
+  - question: "¿Cuánto pienso debo darle a mi gato al día?"
+    answer: "Depende del peso, la actividad y las calorías por 100g del pienso concreto — la tabla de la bolsa es un punto de partida, no una cifra fija. Un gato adulto de tamaño medio con actividad normal suele moverse entre 50-70g diarios de pienso seco, repartidos en 2-3 tomas, pero conviene ajustar según cómo evolucione su peso real."
 ---
 
 import AdSlot from '../../components/AdSlot.astro';
+import ArticleImage from '../../components/ArticleImage.astro';
 
 Los gatos son carnívoros estrictos: a diferencia de los perros, no
 pueden prosperar con una dieta mayoritariamente vegetal, y eso debería
-notarse en la composición real del pienso que eliges.
+notarse en la composición real del pienso que eliges, no solo en las
+palabras del envase.
+
+<ArticleImage
+  src="https://images.unsplash.com/photo-1616668983570-a971956d8928?q=80&w=1200&auto=format&fit=crop"
+  alt="Gato comiendo pienso de un cuenco en el suelo"
+  caption="La composición real de la etiqueta importa más que el reclamo del envase."
+/>
 
 ## Qué mirar en la etiqueta
 
-- **Proteína animal como ingrediente principal**, no solo "proteína" sin
-  especificar el origen.
+- **Proteína animal como ingrediente principal**, no solo "proteína"
+  sin especificar el origen — busca que en la lista de ingredientes
+  aparezca primero un nombre concreto (pollo, salmón, pavo), no
+  "subproductos animales" de forma genérica.
 - **Taurina añadida**: un aminoácido esencial que el gato no sintetiza
-  bien por sí solo y que debe venir de la dieta.
+  bien por sí solo y que debe venir de la dieta. Su ausencia prolongada
+  se asocia a problemas cardiacos y de visión, así que no es un
+  ingrediente decorativo.
 - **Bajo contenido en cereales de relleno**, aunque no es tan crítico
-  como a veces se presenta si el resto de la fórmula es de calidad.
+  como a veces se presenta si el resto de la fórmula es de calidad —
+  "sin cereales" no equivale automáticamente a "mejor pienso" si el
+  ingrediente que sustituye al cereal es igual de pobre en proteína
+  animal.
+- **Guía de alimentación por peso** impresa en el propio envase: sirve
+  de punto de partida real, no solo el marketing de la parte frontal
+  de la bolsa.
 
 <AdSlot variant="in-article" />
 
 ## Según la etapa vital
 
-- **Gatito**: necesita más calorías y proteína por kilo de peso para su
-  crecimiento.
+- **Gatito**: necesita más calorías y proteína por kilo de peso para
+  su crecimiento — un pienso de adulto se queda corto en densidad
+  energética durante esta etapa.
 - **Adulto esterilizado**: suele beneficiarse de una fórmula con menos
-  calorías, ya que la esterilización reduce el gasto energético base.
+  calorías, ya que la esterilización reduce el gasto energético base
+  entre un 20-30% de media.
 - **Senior**: aporte reducido en calorías y, en muchos casos, apoyo
-  renal, ya que los problemas renales son frecuentes en gatos mayores.
+  renal, ya que los problemas renales son frecuentes en gatos mayores
+  de 10-12 años.
+
+<ArticleImage
+  src="https://images.unsplash.com/photo-1596854331442-3cf47265cefb?q=80&w=1200&auto=format&fit=crop"
+  alt="Gato adulto comiendo de un comedero en la cocina"
+/>
 
 ## Transición sin trastornos digestivos
 
 Cambiar de pienso de golpe puede causar vómitos o diarrea. Mezclar
 gradualmente el nuevo pienso con el anterior durante 7-10 días reduce
-mucho el riesgo de molestias digestivas durante el cambio.
+mucho el riesgo de molestias digestivas durante el cambio — un
+esquema habitual es empezar con un 25% del pienso nuevo y un 75% del
+anterior los primeros 2-3 días, subir a 50/50 los siguientes 2-3, y
+terminar con 75/25 antes de completar la transición al 100%.
+
+## Errores comunes al elegir pienso
+
+- **Fiarse solo del precio**: un pienso caro no siempre tiene mejor
+  composición real, y uno económico no siempre es peor — hay que leer
+  la etiqueta en los dos casos.
+- **No revisar el gramaje real recomendado**: servir "a ojo" es la
+  causa más habitual de sobrepeso en gatos de interior, sobre todo
+  cuando el pienso es muy calórico.
+- **Cambiar de pienso ante cualquier vómito puntual**: un vómito
+  aislado no siempre indica que el pienso sea el problema — antes de
+  cambiarlo, vale la pena descartar otras causas (bolas de pelo, comer
+  demasiado rápido) con el veterinario si se repite.
 
 ## Resumen rápido
 
@@ -51,6 +96,7 @@ mucho el riesgo de molestias digestivas durante el cambio.
 | Gatito en crecimiento | Fórmula específica de gatito, más calórica |
 | Gato esterilizado | Fórmula con menos calorías |
 | Gato senior | Apoyo renal y menos calorías |
+| Cambio de pienso | Transición gradual de 7-10 días |
 
 La condición de carnívoro estricto no es un detalle menor — es la base
 que debería guiar cualquier elección de pienso para gato, por encima de
