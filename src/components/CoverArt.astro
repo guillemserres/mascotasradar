@@ -38,9 +38,24 @@ interface Props {
   // pensado para cuando `imageUrl` sea la foto de un producto real de
   // Amazon, donde recortar el objeto sería engañoso.
   fit?: 'cover' | 'contain';
+  // Fuerza carga inmediata (eager + fetchpriority alta) aunque ratio sea
+  // 'card' — para la única tarjeta 'card' que puede quedar por encima del
+  // pliegue (p. ej. la primera categoría de la home en móvil). El resto de
+  // tarjetas 'card' siguen sirviéndose 'lazy' por defecto.
+  priority?: boolean;
 }
 
-const { seccion, icon, alt, imageUrl, ratio = 'card', seed, rounded = 'all', fit = 'cover' } = Astro.props;
+const {
+  seccion,
+  icon,
+  alt,
+  imageUrl,
+  ratio = 'card',
+  seed,
+  rounded = 'all',
+  fit = 'cover',
+  priority = false
+} = Astro.props;
 
 // Un par de tonos por sección, todos dentro de la misma familia editorial
 // cálida de la marca — nunca un color "de sistema" suelto que rompa el
@@ -160,8 +175,8 @@ const sizes =
         srcset={srcset}
         sizes={srcset ? sizes : undefined}
         alt={alt}
-        loading={ratio === 'banner' ? 'eager' : 'lazy'}
-        fetchpriority={ratio === 'banner' ? 'high' : undefined}
+        loading={ratio === 'banner' || priority ? 'eager' : 'lazy'}
+        fetchpriority={ratio === 'banner' || priority ? 'high' : undefined}
         decoding="async"
       />
     </div>

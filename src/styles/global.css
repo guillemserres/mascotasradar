@@ -378,9 +378,15 @@ button {
 
 /* ---------------------------------------------------------------------
    Reveal-on-scroll (opt-in via data-reveal, driven by tiny IO script)
+   No usa opacity: un elemento con opacity:0 no cuenta como "pintado" para
+   Largest Contentful Paint hasta que el JS del IntersectionObserver lo
+   marca visible — en la cabecera de cada landing (la imagen/título que
+   casi siempre ES el elemento LCP) eso añadía segundos de retraso
+   artificial al LCP real. Solo se anima la posición: el contenido está
+   pintado y es legible desde el primer instante, y simplemente se desliza
+   un poco hasta su sitio al entrar en el viewport.
    ------------------------------------------------------------------- */
 [data-reveal] {
-  opacity: 0;
   transform: translateY(14px);
 }
 
@@ -391,7 +397,6 @@ button {
 
 @keyframes reveal-up {
   to {
-    opacity: 1;
     transform: translateY(0);
   }
 }

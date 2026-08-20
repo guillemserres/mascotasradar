@@ -51,7 +51,10 @@ export const AD_SLOTS = {
 // `${animal}/${categoria}` o `${animal}/${categoria}/${tipo}` (de más a
 // menos general; usa siempre la más específica que exista).
 function img(id: string): string {
-  return `https://images.unsplash.com/photo-${id}?fm=jpg&q=75&w=1200&auto=format&fit=crop`;
+  // Sin fm=jpg: así auto=format puede negociar WebP/AVIF según el navegador
+  // (Unsplash decide el formato real por el header Accept) en vez de forzar
+  // siempre JPEG, que pesa un 25-50% más para el mismo resultado visual.
+  return `https://images.unsplash.com/photo-${id}?q=75&w=1200&auto=format&fit=crop`;
 }
 
 // Texto alternativo específico por foto — describe lo que la imagen

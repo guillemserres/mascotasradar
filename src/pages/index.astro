@@ -148,6 +148,7 @@ const BLANK_PX =
               ratio="card"
               rounded="top"
               imageUrl={getTopicImage(a.slug)}
+              priority={i === 0}
             />
             <div class="cat-card__body">
               <span class="cat-card__label">{a.label}</span>
@@ -430,9 +431,11 @@ const BLANK_PX =
   }
 
   /* Entrada de la portada: se ve una vez por visita, así que se anima al
-     cargar (no al hacer scroll, ya está en el viewport desde el inicio). */
+     cargar (no al hacer scroll, ya está en el viewport desde el inicio).
+     Sin opacity: el título es casi siempre el elemento LCP de la home, y
+     opacity:0 hasta que corre la animación retrasa su Largest Contentful
+     Paint de forma artificial. Solo se anima la posición. */
   .hero__enter {
-    opacity: 0;
     transform: translateY(10px);
     animation: hero-enter var(--duration-slow) var(--ease-out) forwards;
     animation-delay: var(--enter-delay, 0ms);
@@ -440,7 +443,6 @@ const BLANK_PX =
 
   @keyframes hero-enter {
     to {
-      opacity: 1;
       transform: none;
     }
   }
