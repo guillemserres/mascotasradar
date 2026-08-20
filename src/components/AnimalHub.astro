@@ -109,6 +109,7 @@ const jsonLd = {
                   ratio="card"
                   rounded="top"
                   imageUrl={CATEGORY_CARD_IMAGES[`${animal}/${s.slug}`]}
+                  priority={i === 0}
                 />
                 <div class="section-card__body">
                   <span class="section-card__label">{s.label}</span>
@@ -129,6 +130,7 @@ const jsonLd = {
                   ratio="card"
                   rounded="top"
                   imageUrl={CATEGORY_CARD_IMAGES[`${animal}/${c.slug}`]}
+                  priority={i === 0}
                 />
                 <div class="section-card__body">
                   <span class="section-card__label">{c.label}</span>
