@@ -1,0 +1,105 @@
+---
+import Icon from './Icon.astro';
+
+interface RelatedLink {
+  label: string;
+  href: string;
+  kind: 'articulo' | 'categoria';
+}
+
+interface Props {
+  links: RelatedLink[];
+}
+
+const { links } = Astro.props;
+const articulos = links.filter((l) => l.kind === 'articulo');
+const categorias = links.filter((l) => l.kind === 'categoria');
+---
+
+{
+  links.length > 0 && (
+    <section class="related" aria-label="Contenido relacionado">
+      {articulos.length > 0 && (
+        <div class="related__group">
+          <h2 data-reveal>Sigue leyendo</h2>
+          <ul class="related__list">
+            {articulos.map((l) => (
+              <li>
+                <a href={l.href}>
+                  <Icon name="chevronRight" size={14} />
+                  {l.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {categorias.length > 0 && (
+        <div class="related__group related__group--commercial">
+          <h2 data-reveal>Relacionado en la web</h2>
+          <ul class="related__list">
+            {categorias.map((l) => (
+              <li>
+                <a href={l.href}>
+                  <Icon name="chevronRight" size={14} />
+                  {l.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
+  )
+}
+
+<style>
+  .related {
+    margin-top: var(--space-8);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--color-border);
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  .related h2 {
+    font-size: 1.1rem;
+  }
+
+  .related__list {
+    margin-top: var(--space-3);
+    display: grid;
+    gap: var(--space-2);
+    list-style: none;
+    padding: 0;
+  }
+
+  .related__list a {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-ink);
+    text-decoration: none;
+    font-size: 0.92rem;
+    transition: border-color 0.15s;
+  }
+
+  .related__list a:hover,
+  .related__list a:focus-visible {
+    border-color: var(--color-brand);
+  }
+
+  .related__list a :global(svg) {
+    flex-shrink: 0;
+    color: var(--color-brand-dark);
+  }
+
+  .related__group--commercial .related__list a {
+    background: var(--color-brand-tint, var(--color-surface));
+    border-color: var(--color-border-strong, var(--color-border));
+  }
+</style>

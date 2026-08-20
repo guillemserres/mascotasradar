@@ -21,6 +21,19 @@ export const ADSENSE = {
   clientId: 'ca-pub-5934388233296084'
 };
 
+// IDs de unidad de anuncio (Anuncios → Por unidad de anuncio en tu cuenta
+// de AdSense). Solo existen 3 posiciones distintas en toda la web
+// (<AdSlot> las usa por defecto según variant/belowFold, así que rellenar
+// estos 3 valores activa la publicidad en las ~488 páginas que usan el
+// componente, sin tocar cada página una a una). Deja "[AD_SLOT_ID]" en
+// cualquiera que aún no tenga unidad creada — ese slot concreto
+// simplemente no se renderiza hasta que lo rellenes.
+export const AD_SLOTS = {
+  leaderboard: '4805793018',
+  inArticle: '4017812187',
+  inArticleBelowFold: '1169800335'
+};
+
 // Fotos reales de temática (no de producto) para portadas de nivel
 // animal/categoría/tipo — home, hubs de categoría y de tipo, y tarjetas
 // del blog. Vienen de Unsplash (licencia gratuita, uso comercial
@@ -579,6 +592,21 @@ export function inferBlogCover(title: string): { seccion: string; icon: IconName
     [/ladra a otros perros/, 'perros', 'blog/perro-ladra-a-otros-perros-paseo', 'paw'],
     [/tiembla/, 'perros', 'blog/perro-tiembla-sin-frio', 'paw'],
     [/cu[aá]nta comida|ci[oó]n diaria/, 'perros', 'blog/racion-diaria-perro-como-calcular', 'bowl'],
+    // Segundo lote de portadas propias — artículos añadidos después, mismo
+    // criterio: específico antes que el genérico equivalente de abajo.
+    [/cada cu[aá]nto hay que cepillar/, 'perros', 'perros/higiene/cepillos', 'brush'],
+    [/tiene sarro/, 'perros', 'perros/higiene/cuidado-dental', 'brush'],
+    [/cortar las u[ñn]as/, 'perros', 'perros/higiene/cortaunas', 'brush'],
+    [/gps para perros/, 'perros', 'perros/tecnologia/gps-tech', 'compass'],
+    [/c[aá]maras para perros/, 'perros', 'perros/tecnologia/camaras', 'camera'],
+    [/viajar en coche/, 'perros', 'perros/viajes-y-coche/cinturones', 'harness'],
+    [/bebe poco agua/, 'perros', 'perros/alimentacion/fuentes-de-agua', 'droplet'],
+    [/comida h[uú]meda.*combinar|pienso.*comida h[uú]meda/, 'perros', 'perros/alimentacion/comida-humeda', 'bowl'],
+    [/arenero cerrado o abierto/, 'gatos', 'gatos/areneros/cerrados', 'litterbox'],
+    [/no usa el rascador nuevo/, 'gatos', 'gatos/rascadores/torres', 'cat'],
+    [/pienso sin cereales/, 'perros', 'perros/alimentacion/pienso', 'bowl'],
+    [/deslanador para perros/, 'perros', 'perros/higiene/cepillos', 'brush'],
+    [/hipoalerg[eé]nico, renal o gastrointestinal/, 'perros', 'perros/alimentacion/pienso', 'bowl'],
     [/comedero|comida.*rápido|ración/, 'perros', 'perros/alimentacion/antivoracidad', 'bowl'],
     [/arnés|arnes|collar/, 'perros', 'perros/paseo/antitirones', 'harness'],
     [/juguete/, 'perros', 'perros/juguetes/cuerda', 'toy'],

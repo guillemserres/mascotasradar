@@ -96,6 +96,18 @@ const productos = defineCollection({
 // hacia varias categorías/guías/productos a la vez. No lleva su propio
 // sistema de afiliados: si enlaza a un producto, usa los mismos enlaces
 // centralizados de siempre.
+// Enlace curado a mano hacia otro artículo del blog o hacia una página
+// comercial (guía de tipo, landing de categoría, comparativa). "articulo"
+// alimenta el bloque "Sigue leyendo" (red temática entre posts);
+// "categoria" alimenta "Relacionado en la web" (el puente hacia contenido
+// comercial). Deliberadamente manual, no autogenerado por keyword-matching,
+// para que el anchor text y el destino sean siempre relevantes de verdad.
+const relatedLinkSchema = z.object({
+  label: z.string(),
+  href: z.string(),
+  kind: z.enum(['articulo', 'categoria']).default('categoria')
+});
+
 const blog = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/blog' }),
   schema: z.object({
@@ -103,7 +115,8 @@ const blog = defineCollection({
     description: z.string(),
     pubDate: z.date(),
     updatedDate: z.date().optional(),
-    faqs: z.array(faqSchema).optional()
+    faqs: z.array(faqSchema).optional(),
+    related: z.array(relatedLinkSchema).optional()
   })
 });
 

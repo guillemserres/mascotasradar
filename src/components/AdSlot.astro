@@ -3,29 +3,41 @@
 // Shift (CLS) cuando se cargue el script de AdSense.
 //
 // Se activa solo (sin tocar este archivo ni las páginas que lo usan) en
-// cuanto rellenes ADSENSE.clientId en site.config.ts con tu ID real — hasta
-// entonces no carga ningún script de terceros, solo reserva el hueco.
+// cuanto rellenes ADSENSE.clientId en site.config.ts y pases un slotId real
+// — hasta entonces no renderiza nada (ni caja, ni placeholder visible):
+// una caja vacía con la etiqueta "Publicidad" y ningún anuncio dentro da
+// sensación de web sin terminar a un visitante real. Mejor no mostrar nada
+// que mostrar un hueco roto.
 //
 // Reglas que este componente ayuda a cumplir:
 // - CLS < 0.1: el alto está fijado por aspect-ratio, nunca por el contenido del anuncio.
 // - Densidad de anuncios: no coloques más de un AdSlot "large" por viewport;
 //   Google zero-fillea en silencio los slots que superan ~30% del viewport.
 // - below-the-fold: usa loading="lazy" (variant="below-fold") fuera del primer viewport.
-import { ADSENSE } from '../site.config';
+import { ADSENSE, AD_SLOTS } from '../site.config';
 
 type Variant = 'leaderboard' | 'rectangle' | 'in-article';
 
 interface Props {
   variant?: Variant;
   belowFold?: boolean;
-  // ID del bloque de anuncio concreto dentro de tu cuenta de AdSense
-  // (Anuncios → Por unidad de anuncio). Cada AdSlot en el sitio debería
-  // tener el suyo — no reutilices el mismo slotId en dos sitios distintos
-  // de la página.
+  // Solo hace falta pasar esto para una posición puntual fuera de las 3
+  // habituales — el valor por defecto ya viene de AD_SLOTS en
+  // site.config.ts según variant/belowFold, así que normalmente no se
+  // pasa esta prop.
   slotId?: string;
 }
 
-const { variant = 'rectangle', belowFold = false, slotId = '[AD_SLOT_ID]' }: Props = Astro.props;
+const { variant = 'rectangle', belowFold = false, slotId }: Props = Astro.props;
+
+const defaultSlotId =
+  variant === 'leaderboard'
+    ? AD_SLOTS.leaderboard
+    : belowFold
+      ? AD_SLOTS.inArticleBelowFold
+      : AD_SLOTS.inArticle;
+
+const resolvedSlotId = slotId ?? defaultSlotId;
 
 const dimensions: Record<Variant, { ratio: string; minHeight: string }> = {
   leaderboard: { ratio: '728 / 90', minHeight: '90px' },
@@ -34,43 +46,41 @@ const dimensions: Record<Variant, { ratio: string; minHeight: string }> = {
 };
 const { ratio, minHeight } = dimensions[variant];
 
-const isConfigured = ADSENSE.clientId !== '[ADSENSE_ID]' && slotId !== '[AD_SLOT_ID]';
+const isConfigured = ADSENSE.clientId !== '[ADSENSE_ID]' && resolvedSlotId !== '[AD_SLOT_ID]';
 ---
 
-<div
-  class="ad-slot"
-  data-ad-variant={variant}
-  data-lazy={belowFold ? 'true' : 'false'}
-  data-pagefind-ignore
-  style={`aspect-ratio: ${ratio}; min-height: ${minHeight};`}
->
-  {
-    isConfigured ? (
-      // Bloque de anuncio manual — coexiste con los Anuncios automáticos
-      // que Google ya gestiona por su cuenta (esos se insertan y activan
-      // solos, sin tocar este componente). El push va junto a este <ins>
-      // concreto, no en un script global: así nunca compite por el mismo
-      // elemento con lo que Auto Ads inserte en la página. El
-      // consentimiento lo gestiona el propio mensaje de AdSense (Privacidad
-      // y mensajes → Reglamentos europeos), no un banner propio del sitio.
-      <>
-        <ins
-          class="adsbygoogle"
-          style="display:block;width:100%;height:100%"
-          data-ad-client={ADSENSE.clientId}
-          data-ad-slot={slotId}
-          data-ad-format="auto"
-          data-full-width-responsive="true"
-        />
-        <script is:inline>
-          (window.adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
-      </>
-    ) : (
-      <span class="ad-slot__label">Publicidad</span>
-    )
-  }
-</div>
+{
+  isConfigured && (
+    <div
+      class="ad-slot"
+      data-ad-variant={variant}
+      data-lazy={belowFold ? 'true' : 'false'}
+      data-pagefind-ignore
+      style={`aspect-ratio: ${ratio}; min-height: ${minHeight};`}
+    >
+      {
+        // Bloque de anuncio manual — coexiste con los Anuncios automáticos
+        // que Google ya gestiona por su cuenta (esos se insertan y activan
+        // solos, sin tocar este componente). El push va junto a este <ins>
+        // concreto, no en un script global: así nunca compite por el mismo
+        // elemento con lo que Auto Ads inserte en la página. El
+        // consentimiento lo gestiona el propio mensaje de AdSense (Privacidad
+        // y mensajes → Reglamentos europeos), no un banner propio del sitio.
+      }
+      <ins
+        class="adsbygoogle"
+        style="display:block;width:100%;height:100%"
+        data-ad-client={ADSENSE.clientId}
+        data-ad-slot={resolvedSlotId}
+        data-ad-format="auto"
+        data-full-width-responsive="true"
+      />
+      <script is:inline>
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+    </div>
+  )
+}
 
 <style>
   .ad-slot {
@@ -83,12 +93,5 @@ const isConfigured = ADSENSE.clientId !== '[ADSENSE_ID]' && slotId !== '[AD_SLOT
     border-radius: var(--radius-md);
     margin: var(--space-6) 0;
     overflow: hidden;
-  }
-
-  .ad-slot__label {
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--color-ink-faint);
   }
 </style>

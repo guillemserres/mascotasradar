@@ -5,6 +5,7 @@ import Breadcrumbs from '../components/Breadcrumbs.astro';
 import BackToTop from '../components/BackToTop.astro';
 import Byline from '../components/Byline.astro';
 import FaqSection from '../components/FaqSection.astro';
+import RelatedContent from '../components/RelatedContent.astro';
 import AdSlot from '../components/AdSlot.astro';
 import CoverArt from '../components/CoverArt.astro';
 import { SITE, inferBlogCover } from '../site.config';
@@ -14,15 +15,22 @@ interface Faq {
   answer: string;
 }
 
+interface RelatedLink {
+  label: string;
+  href: string;
+  kind: 'articulo' | 'categoria';
+}
+
 interface Props {
   title: string;
   description: string;
   pubDate: Date;
   updatedDate?: Date;
   faqs?: Faq[];
+  related?: RelatedLink[];
 }
 
-const { title, description, pubDate, updatedDate, faqs } = Astro.props;
+const { title, description, pubDate, updatedDate, faqs, related } = Astro.props;
 const cover = inferBlogCover(title);
 
 const jsonLd = {
@@ -91,6 +99,8 @@ const faqJsonLd =
       </div>
 
       <AdSlot variant="in-article" belowFold />
+
+      {related && related.length > 0 && <RelatedContent links={related} />}
 
       {faqs && faqs.length > 0 && <FaqSection faqs={faqs} />}
     </article>
