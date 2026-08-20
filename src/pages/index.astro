@@ -66,12 +66,25 @@ const allPosts = (await getCollection('blog')).sort(
 // web (a diferencia de TOPIC_IMAGES, que sí se repite entre categoría,
 // tipo y blog) — así la portada tiene su propia identidad visual, más
 // editorial, en vez de anticipar lo que ya se ve más abajo.
+//
+// .hero__mosaic tiene max-width:420px y display:none por debajo de
+// 860px (ver estilos abajo) — el mosaico entero es invisible en móvil.
+// Anchos ajustados al tamaño real máximo de cada foto dentro de esos
+// 420px (72/50/30/25% respectivamente), a 2x para pantallas retina, en
+// vez de servir 600-900px fijos que nunca se ven a ese tamaño ni
+// siquiera en desktop.
 const HERO_PHOTOS = [
-  'https://images.unsplash.com/photo-1558788353-f76d92427f16?fm=jpg&q=80&w=900&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1679658347975-931dc15e438d?fm=jpg&q=80&w=700&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1522721161886-ecb3e3b9f3e6?fm=jpg&q=80&w=600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1705642798919-73b029f4725e?fm=jpg&q=80&w=600&auto=format&fit=crop'
+  'https://images.unsplash.com/photo-1558788353-f76d92427f16?q=80&w=640&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1679658347975-931dc15e438d?q=80&w=480&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1522721161886-ecb3e3b9f3e6?q=80&w=320&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1705642798919-73b029f4725e?q=80&w=320&auto=format&fit=crop'
 ];
+// gif 1x1 transparente: lo que carga <img> en el fallback de <picture>
+// cuando ningún <source> coincide (es decir, en móvil) — así el
+// mosaico oculto no descarga nada real en vez de descargar la foto
+// completa para no mostrarla nunca.
+const BLANK_PX =
+  'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 ---
 
 <BaseLayout title={SITE.tagline} description={SITE.description}>
@@ -92,17 +105,29 @@ const HERO_PHOTOS = [
         </div>
 
         <div class="hero__mosaic hero__enter" style="--enter-delay:280ms" aria-hidden="true">
-          <img
-            class="hero-mosaic__photo hero-mosaic__photo--main"
-            src={HERO_PHOTOS[0]}
-            alt=""
-            loading="eager"
-            fetchpriority="high"
-            decoding="async"
-          />
-          <img class="hero-mosaic__photo hero-mosaic__photo--a1" src={HERO_PHOTOS[1]} alt="" loading="eager" decoding="async" />
-          <img class="hero-mosaic__photo hero-mosaic__photo--a2" src={HERO_PHOTOS[2]} alt="" loading="eager" decoding="async" />
-          <img class="hero-mosaic__photo hero-mosaic__photo--a3" src={HERO_PHOTOS[3]} alt="" loading="eager" decoding="async" />
+          <picture>
+            <source media="(min-width: 861px)" srcset={HERO_PHOTOS[0]} />
+            <img
+              class="hero-mosaic__photo hero-mosaic__photo--main"
+              src={BLANK_PX}
+              alt=""
+              loading="eager"
+              fetchpriority="high"
+              decoding="async"
+            />
+          </picture>
+          <picture>
+            <source media="(min-width: 861px)" srcset={HERO_PHOTOS[1]} />
+            <img class="hero-mosaic__photo hero-mosaic__photo--a1" src={BLANK_PX} alt="" loading="eager" decoding="async" />
+          </picture>
+          <picture>
+            <source media="(min-width: 861px)" srcset={HERO_PHOTOS[2]} />
+            <img class="hero-mosaic__photo hero-mosaic__photo--a2" src={BLANK_PX} alt="" loading="eager" decoding="async" />
+          </picture>
+          <picture>
+            <source media="(min-width: 861px)" srcset={HERO_PHOTOS[3]} />
+            <img class="hero-mosaic__photo hero-mosaic__photo--a3" src={BLANK_PX} alt="" loading="eager" decoding="async" />
+          </picture>
         </div>
       </div>
     </section>
