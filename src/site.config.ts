@@ -8,7 +8,13 @@ export const SITE = {
   description:
     'Reviews, comparativas y guías de compra sobre productos para perros, gatos y acuarios.',
   locale: 'es-ES',
-  url: 'https://mascotasradar.com',
+  // El dominio raíz (mascotasradar.com, sin www) hace un 308 permanente a
+  // www.mascotasradar.com — ese es el dominio que sirve la web de verdad,
+  // sin redirección. Toda URL canónica/OG/JSON-LD/sitemap tiene que
+  // apuntar aquí: si apuntara al dominio que redirige, cada canonical
+  // añadiría un salto de redirección innecesario para los rastreadores y
+  // dividiría la señal de autoridad entre las dos versiones del dominio.
+  url: 'https://www.mascotasradar.com',
   contactEmail: 'hola@mascotasradar.com'
 };
 

@@ -127,7 +127,12 @@ const faqJsonLd =
     : null;
 ---
 
-<BaseLayout title={title} description={description} preloadImage={heroImage}>
+<BaseLayout
+  title={title}
+  description={description}
+  preloadImage={heroImage}
+  noindex={products.length === 0}
+>
   <div class="wrap">
     <Breadcrumbs items={breadcrumbItems} />
 
