@@ -183,42 +183,27 @@ const navGroups = ANIMALS.map((animal) => {
     position: sticky;
     top: 0;
     z-index: 50;
-    /* Fondo casi opaco por defecto (no solo decorativo): Safari tiene un
-       bug conocido donde backdrop-filter no se renderiza en elementos
-       position:sticky, dejando solo la capa semitransparente sin
-       desenfocar sobre el contenido de detrás — con una rgba baja (0.72)
-       eso se veía "lavado" e ilegible. Con 0.94 el header es legible
-       incluso si el blur no llega a aplicarse; donde sí funciona, el
-       blur sigue dando el efecto cristal esmerilado de todas formas.
-       Firefox también carece de -webkit-backdrop-filter en versiones
-       antiguas y se beneficia del mismo fallback. */
-    background: rgba(251, 247, 240, 0.94);
-    backdrop-filter: blur(10px) saturate(160%);
-    -webkit-backdrop-filter: blur(10px) saturate(160%);
+    /* Fondo sólido, sin backdrop-filter: en un caso real confirmado
+       (Safari/macOS, ventana privada, sin extensiones) el header salía
+       "lavado" e ilegible con blur — subir la opacidad tampoco lo
+       arregló, así que el problema no era solo de contraste sino del
+       propio backdrop-filter en un elemento position:sticky. Quitarlo
+       del todo es la única forma de garantizar que se vea igual en
+       todos los navegadores; se pierde el efecto cristal esmerilado,
+       pero un header legible pesa más que el efecto. */
+    background: var(--color-bg);
     border-bottom: 1px solid transparent;
     box-shadow: 0 1px 0 transparent;
     transition:
-      background-color var(--duration-slow) var(--ease-out),
       border-color var(--duration-slow) var(--ease-out),
       box-shadow var(--duration-slow) var(--ease-out);
   }
 
-  /* Edge effect: al hacer scroll, el header se "materializa" un poco más
-     (más opaco, sombra sutil) en vez de tener una línea divisoria fija. */
+  /* Edge effect: al hacer scroll, el header añade un borde/sombra sutil
+     en vez de tener una línea divisoria fija. */
   .header.is-scrolled {
-    background: rgba(251, 247, 240, 0.98);
     border-bottom-color: var(--color-border);
     box-shadow: var(--shadow-sm);
-  }
-
-  @media (prefers-reduced-transparency: reduce) {
-    .header,
-    .header.is-scrolled {
-      background: var(--color-bg);
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
-      border-bottom-color: var(--color-border);
-    }
   }
 
   .header__inner {
