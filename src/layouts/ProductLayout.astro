@@ -11,7 +11,6 @@ import AdSlot from '../components/AdSlot.astro';
 import Icon from '../components/Icon.astro';
 import Byline from '../components/Byline.astro';
 import CoverArt from '../components/CoverArt.astro';
-import { buildAmazonUrl } from '../lib/amazon';
 import {
   SITE,
   ANIMALS,
@@ -102,18 +101,16 @@ const breadcrumbItems = isNew
       { label: title }
     ];
 
-// Precio en formato schema.org (número con punto decimal, sin símbolo de
-// moneda) a partir del precio ya introducido a mano en el frontmatter
-// ("79,99 €" → "79.99") — nunca se inventa un precio nuevo, solo se
-// reformatea el que ya existe. Sin "availability": no tenemos disponibilidad
-// en tiempo real de Amazon, así que afirmarla sería un dato inventado.
-function parsePrice(raw: string): string | null {
-  const match = raw.match(/([\d.,]+)\s*€/);
-  if (!match) return null;
-  return match[1].replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.');
-}
-const priceAmount = price ? parsePrice(price) : null;
-
+// Deliberadamente SIN "offers": MascotasRadar no es el vendedor (el precio,
+// el stock, el envío y las devoluciones son de Amazon, no nuestros), así que
+// declarar un Offer propio con "availability", "hasMerchantReturnPolicy" o
+// "shippingDetails" sería afirmar datos que no controlamos ni conocemos en
+// tiempo real — justo lo que Search Console marcó como "Fichas de
+// comerciante" al detectar un Offer con precio. Un sitio de afiliación no es
+// un comerciante: quitamos el Offer entero en vez de inventar esos campos.
+// El precio orientativo sigue mostrándose en la página (con fecha de
+// consulta) vía AmazonProductLink; el rich result legítimo aquí es el
+// Review/rating editorial, que sí se mantiene.
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Product',
@@ -127,17 +124,7 @@ const jsonLd = {
     reviewRating: { '@type': 'Rating', ratingValue: rating, bestRating: 5, worstRating: 1 },
     author: { '@type': 'Organization', name: SITE.name },
     datePublished: pubDate.toISOString()
-  },
-  ...(priceAmount
-    ? {
-        offers: {
-          '@type': 'Offer',
-          price: priceAmount,
-          priceCurrency: 'EUR',
-          url: buildAmazonUrl(asinOrUrl)
-        }
-      }
-    : {})
+  }
 };
 ---
 
