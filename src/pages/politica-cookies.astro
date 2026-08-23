@@ -1,8 +1,9 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { SITE, ADSENSE } from '../site.config';
+import { SITE, ADSENSE, ANALYTICS } from '../site.config';
 
 const adsenseConfigured = ADSENSE.clientId !== '[ADSENSE_ID]';
+const analyticsConfigured = ANALYTICS.ga4Id !== '[GA4_ID]';
 const lastUpdated = 'agosto de 2026';
 ---
 
@@ -35,9 +36,9 @@ const lastUpdated = 'agosto de 2026';
     Si nos visitas desde el Espacio Económico Europeo, el Reino Unido o
     Suiza, Google te muestra un mensaje de consentimiento gestionado por
     su propia plataforma (Google Funding Choices) antes de mostrarte
-    ningún anuncio personalizado. Ahí puedes <strong>aceptar, rechazar
-    o gestionar tus opciones</strong> por separado. Tu elección la guarda
-    y la aplica Google, no este sitio.
+    ningún anuncio personalizado{analyticsConfigured && ' o de activar Google Analytics'}.
+    Ahí puedes <strong>aceptar, rechazar o gestionar tus opciones</strong>{' '}
+    por separado. Tu elección la guarda y la aplica Google, no este sitio.
   </p>
 
   <h2>Cookies necesarias</h2>
@@ -63,6 +64,28 @@ const lastUpdated = 'agosto de 2026';
       <>
         Este sitio todavía no tiene activada la publicidad de Google
         AdSense. En cuanto se active, estas cookies solo se cargarán
+        conforme al RGPD y la LSSI-CE.
+      </>
+    )}
+  </p>
+
+  <h2>Cookies de analítica</h2>
+  <p>
+    {analyticsConfigured ? (
+      <>
+        Este sitio usa Google Analytics para entender de forma agregada
+        cómo se navega por la web: qué páginas se visitan más, desde qué
+        tipo de dispositivo o cuánto tiempo se pasa en cada sección. No
+        usamos esta información para identificarte individualmente. Si
+        estás en el EEE, el Reino Unido o Suiza, estas cookies{' '}
+        <strong>solo se activan si aceptas el mensaje de consentimiento
+        de Google</strong>; si lo rechazas, tu visita no se registra en
+        Analytics y el resto del sitio funciona con normalidad.
+      </>
+    ) : (
+      <>
+        Este sitio todavía no tiene activada la analítica de Google
+        Analytics. En cuanto se active, estas cookies solo se cargarán
         conforme al RGPD y la LSSI-CE.
       </>
     )}
