@@ -24,6 +24,10 @@ interface Props {
   // repitiéndolo ya. En la propia ficha de producto, justo debajo del H1,
   // repetirlo es ruido — pásalo a `false` ahí.
   showName?: boolean;
+  // Posición del CTA en la página (p.ej. "top" o "bottom"), solo para
+  // distinguir el evento de GA4 entre los dos botones de una misma ficha.
+  // Puramente informativo, no afecta al renderizado.
+  position?: string;
 }
 
 const {
@@ -32,7 +36,8 @@ const {
   price,
   priceCheckedDate,
   label = 'Ver precio en Amazon',
-  showName = true
+  showName = true,
+  position
 } = Astro.props;
 
 const href = buildAmazonUrl(asinOrUrl);
@@ -60,11 +65,34 @@ const href = buildAmazonUrl(asinOrUrl);
     target="_blank"
     rel="sponsored noopener nofollow"
     aria-label={`${label}: ${productName} (se abre en una pestaña nueva)`}
+    data-amazon-cta
+    data-item-id={asinOrUrl}
+    data-item-name={productName}
+    data-position={position ?? ''}
   >
     <Icon name="amazonCart" size={18} />
     {label}
   </a>
 </div>
+
+<script>
+  // Evento GA4 al hacer clic en cualquier CTA de Amazon (ficha de producto,
+  // top o bottom). No bloquea la navegación: gtag ya encola el evento de
+  // forma asíncrona por su cuenta, así que no hace falta retrasar el enlace.
+  // Silencioso si GA4 no está cargado (p. ej. bloqueador de anuncios).
+  document.querySelectorAll<HTMLAnchorElement>('[data-amazon-cta]').forEach((link) => {
+    link.addEventListener('click', () => {
+      const w = window as typeof window & { gtag?: (...args: unknown[]) => void };
+      if (typeof w.gtag !== 'function') return;
+      w.gtag('event', 'affiliate_click', {
+        item_id: link.dataset.itemId,
+        item_name: link.dataset.itemName,
+        link_position: link.dataset.position,
+        destination: 'amazon'
+      });
+    });
+  });
+</script>
 
 <style>
   .amazon-cta {
