@@ -1,0 +1,57 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../site.config';
+---
+
+<BaseLayout
+  title="Quiénes somos"
+  description="Quién hay detrás de MascotasRadar, por qué nació este sitio y cómo elegimos qué productos recomendar para tu mascota."
+>
+  <div class="wrap">
+  <div class="prose">
+  <h1>Quiénes somos</h1>
+
+  <p>
+    {SITE.name} lo escribe y mantiene <strong>Guillem Serres</strong>. Llevo
+    13 años conviviendo con perros, y esta web nació de una frustración muy
+    concreta: cuando buscaba caprichos o productos que realmente necesitaban
+    mis perros (según la edad, el tamaño o alguna necesidad puntual), me
+    costaba encontrar información clara y comparada — solo fichas de
+    producto sueltas o reseñas genéricas que no explicaban el porqué de cada
+    recomendación.
+  </p>
+
+  <p>
+    {SITE.name} es mi intento de resolver eso: guías de compra y
+    comparativas pensadas para que cualquier dueño pueda encontrar el
+    producto adecuado para su mascota concreta, con el razonamiento detrás
+    de cada recomendación, no solo un listado.
+  </p>
+
+  <h2>Qué cubre el sitio y de dónde sale la información</h2>
+  <p>
+    Mi experiencia directa como dueño es con perros. Las guías de gatos,
+    acuarios y otras mascotas de este sitio están elaboradas con
+    investigación exhaustiva sobre necesidades reales de cada especie,
+    especificaciones de producto y buenas prácticas de bienestar animal —
+    no presento esa experiencia como propia cuando no lo es. Si alguna
+    recomendación te parece que no encaja con el caso real de tu mascota,
+    escríbeme: prefiero corregir algo mal enfocado que dejarlo publicado.
+  </p>
+
+  <h2>Cómo elegimos qué recomendar</h2>
+  <p>
+    Los productos se seleccionan por criterios propios (características,
+    valoraciones públicas disponibles, relación calidad-precio), nunca por
+    la comisión de afiliado que paguen — puedes ver el detalle en el{' '}
+    <a href="/aviso-afiliados/">aviso de afiliados</a>.
+  </p>
+
+  <h2>Contacto</h2>
+  <p>
+    Para dudas, correcciones o sugerencias, escríbeme a{' '}
+    {SITE.contactEmail}.
+  </p>
+  </div>
+  </div>
+</BaseLayout>

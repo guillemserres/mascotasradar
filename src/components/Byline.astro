@@ -1,13 +1,23 @@
 ---
-import { SITE } from '../site.config';
 ---
 
-<p class="byline">Escrito por el equipo de {SITE.name}</p>
+<p class="byline">Escrito por <a href="/quienes-somos/">Guillem Serres</a></p>
 
 <style>
   .byline {
     margin-top: var(--space-1);
     font-size: 0.85rem;
     color: var(--color-ink-faint);
+  }
+
+  .byline a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--color-border);
+    text-underline-offset: 2px;
+  }
+
+  .byline a:hover {
+    color: var(--color-brand-dark);
   }
 </style>
